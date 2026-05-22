@@ -1,0 +1,2414 @@
+---
+description: Estándares, buenas prácticas y convenciones de desarrollo backend para la aplicación Java/Spring Boot, incluyendo Domain-Driven Design, principios SOLID, patrones de arquitectura, diseño de API y prácticas de testing
+globs: [ 
+    "backend/src/**/*.java",
+    "backend/src/**/*.xml",
+    "backend/src/**/*.yml",
+    "backend/pom.xml"
+]
+alwaysApply: true
+---
+
+# Estándares y buenas prácticas del proyecto Backend
+
+## Índice
+
+- [Resumen](#resumen)
+- [Stack tecnológico](#stack-tecnológico)
+    - [Tecnologías base](#tecnologías-base)
+    - [Base de datos y ORM](#base-de-datos-y-orm)
+    - [Framework de testing](#framework-de-testing)
+    - [Herramientas de desarrollo](#herramientas-de-desarrollo)
+- [Visión general de la arquitectura](#visión-general-de-la-arquitectura)
+    - [Domain-Driven Design (DDD)](#domain-driven-design-ddd)
+    - [Arquitectura en capas](#arquitectura-en-capas)
+    - [Estructura del proyecto](#estructura-del-proyecto)
+- [Principios de Domain-Driven Design](#principios-de-domain-driven-design)
+    - [Entidades](#entidades)
+    - [Objetos de valor](#objetos-de-valor)
+    - [Agregados](#agregados)
+    - [Repositorios](#repositorios)
+    - [Servicios de dominio](#servicios-de-dominio)
+    - [Recomendaciones adicionales](#recomendaciones-adicionales)
+- [Principios SOLID y DRY](#principios-solid-y-dry)
+    - [Principio de responsabilidad única (SRP)](#principio-de-responsabilidad-única-srp)
+    - [Principio abierto/cerrado (OCP)](#principio-abiertocerrado-ocp)
+    - [Principio de sustitución de Liskov (LSP)](#principio-de-sustitución-de-liskov-lsp)
+    - [Principio de segregación de interfaces (ISP)](#principio-de-segregación-de-interfaces-isp)
+    - [Principio de inversión de dependencias (DIP)](#principio-de-inversión-de-dependencias-dip)
+    - [DRY (Don't Repeat Yourself)](#dry-dont-repeat-yourself)
+- [Estándares de código](#estándares-de-código)
+    - [Convenciones de idioma y nombres](#convenciones-de-idioma-y-nombres)
+    - [Buenas prácticas de Java](#buenas-prácticas-de-java)
+    - [Manejo de errores](#manejo-de-errores)
+    - [Patrones de validación](#patrones-de-validación)
+    - [Estándares de logging](#estándares-de-logging)
+- [Estándares de diseño de API](#estándares-de-diseño-de-api)
+    - [Endpoints REST](#endpoints-rest)
+    - [Patrones request/response](#patrones-requestresponse)
+    - [Formato de respuesta de error](#formato-de-respuesta-de-error)
+    - [Configuración de CORS](#configuración-de-cors)
+- [Patrones de base de datos](#patrones-de-base-de-datos)
+    - [Configuración de entidades JPA](#configuración-de-entidades-jpa)
+    - [Migraciones](#migraciones)
+    - [Patrón de repositorio](#patrón-de-repositorio)
+- [Estándares de testing](#estándares-de-testing)
+    - [Testing unitario](#testing-unitario)
+    - [Testing de integración](#testing-de-integración)
+    - [Requisitos de cobertura de pruebas](#requisitos-de-cobertura-de-pruebas)
+    - [Estándares de mocking](#estándares-de-mocking)
+- [Buenas prácticas de rendimiento](#buenas-prácticas-de-rendimiento)
+    - [Optimización de consultas de base de datos](#optimización-de-consultas-de-base-de-datos)
+    - [Operaciones asíncronas](#operaciones-asíncronas)
+    - [Rendimiento en manejo de errores](#rendimiento-en-manejo-de-errores)
+- [Buenas prácticas de seguridad](#buenas-prácticas-de-seguridad)
+    - [Validación de entrada](#validación-de-entrada)
+    - [Variables de entorno](#variables-de-entorno)
+    - [Inyección de dependencias](#inyección-de-dependencias)
+- [Flujo de desarrollo](#flujo-de-desarrollo)
+    - [Flujo Git](#flujo-git)
+    - [Scripts de desarrollo](#scripts-de-desarrollo)
+    - [Calidad de código](#calidad-de-código)
+- [Despliegue con Docker](#despliegue-con-docker)
+    - [Configuración de Dockerfile](#configuración-de-dockerfile)
+    - [Configuración de Docker Compose](#configuración-de-docker-compose)
+
+## Resumen
+
+Este documento describe las buenas prácticas, convenciones y estándares usados en la aplicación backend. El backend sigue los principios de Domain-Driven Design (DDD) e implementa una arquitectura en capas para garantizar consistencia, mantenibilidad y escalabilidad del código.
+
+## Stack tecnológico
+
+### Tecnologías base
+- **Java**: Versión 21 (LTS), usando distribuciones OpenJDK (Eclipse Temurin), no Oracle JDK, para evitar licenciamiento comercial
+- **Spring Boot**: Framework 3.5.x
+- **Spring Framework**: 6.x para inyección de dependencias y AOP
+- **Maven**: Automatización de build y gestión de dependencias
+
+### Base de datos y ORM
+- **PostgreSQL**: Base de datos relacional (contenedor Docker)
+- **Spring Data JPA**: Capa de abstracción de repositorios
+- **Hibernate**: Implementación JPA (incluida con Spring Data JPA)
+
+### Framework de testing
+- **JUnit 5**: Framework de unit e integration testing
+- **Mockito**: Framework de mocking para unit tests
+- **Spring Boot Test**: Soporte para integration testing
+- **Umbral de cobertura**: 90% en branches, functions, lines y statements
+- **Ubicación de tests**: `src/test/java` con nombres `*Test.java` y `*IT.java`
+
+### Herramientas de desarrollo
+- **Maven**: Herramienta de build
+- **Spring Boot DevTools**: Hot reload y utilidades de desarrollo
+- **Lombok**: Reducir código repetitivo
+- **MapStruct**: Mapeo type-safe de beans
+- **Spring Boot Actuator**: Monitoreo y métricas de la aplicación
+
+## Visión general de la arquitectura
+
+### Domain-Driven Design (DDD)
+
+Domain-Driven Design es una metodología que centra el modelado del software en la lógica de negocio y el conocimiento del dominio. Al centrar el desarrollo en una comprensión profunda del dominio, DDD facilita la creación de sistemas complejos mantenibles, escalables y alineados con los objetivos de negocio.
+
+**Principios fundamentales:**
+- **Ubiquitous Language**: Vocabulario común compartido entre desarrolladores y expertos del dominio en todo el proyecto
+- **Domain Models**: Modelos de software que reflejan con precisión reglas de negocio, restricciones y procesos
+- **Bounded Contexts**: Límites claros alrededor de conceptos del dominio relacionados para gestionar la complejidad en sistemas grandes
+- **Aggregates**: Conjuntos de objetos tratados como unidades para mantener consistencia y fronteras transaccionales
+
+**Beneficios:**
+- **Comunicación mejorada**: Una terminología clara reduce malentendidos entre equipos técnicos y de negocio
+- **Código alineado al negocio**: Los modelos reflejan directamente la lógica de negocio, facilitando la evolución del software
+- **Alta mantenibilidad**: Dividir el sistema en subdominios y bounded contexts facilita la comprensión y modificación
+- **Escalabilidad**: La separación clara de responsabilidades permite que los equipos trabajen de forma independiente en distintos dominios
+- **Menor deuda técnica**: Modelos de dominio sólidos evitan la acumulación de código de parches rápidos
+
+### Arquitectura en capas con DDD
+
+El backend sigue una **arquitectura de cuatro capas** que separa claramente las responsabilidades manteniendo los principios DDD:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│         PRESENTATION LAYER                                   │
+│  (Controllers, manejo de request/response, validación de entrada) │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│         APPLICATION LAYER                                    │
+│  (Casos de uso, orquestación, flujo de negocio)            │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│         DOMAIN LAYER                                         │
+│  (Lógica de negocio, entidades, Value Objects, agregados)  │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│         INFRASTRUCTURE LAYER                                 │
+│  (Acceso a datos, servicios externos, implementación técnica)│
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Responsabilidades por capa:**
+
+**Presentation Layer** (`src/presentation/`)
+- REST controllers que manejan peticiones y respuestas HTTP
+- Validación de requests con Jakarta Bean Validation
+- Routing de endpoints API y manejo de métodos HTTP
+- Delega la lógica de negocio en servicios de la capa Application
+- Devuelve códigos de estado HTTP y formatos de respuesta apropiados
+- Responsabilidad: Aceptar peticiones externas y formatear respuestas
+
+**Application Layer** (`src/application/`)
+- Servicios de aplicación que coordinan use cases y flujos de negocio
+- Data Transfer Objects (DTOs) para manejo request/response
+- Orquestación de operaciones de la capa domain
+- Validación de entrada y transformación de datos
+- Gestión de transacciones
+- Manejo de excepciones y mapeo a respuestas HTTP
+- Responsabilidad: Implementar use cases del sistema y coordinar operaciones del dominio
+
+**Domain Layer** (`src/domain/`)
+- Entidades de negocio con identidad y ciclo de vida
+- Value objects que representan conceptos del dominio
+- Aggregates que refuerzan fronteras de consistencia
+- Interfaces de repositorio que definen contratos de acceso a datos
+- Domain services para lógica de negocio entre agregados
+- Domain events para procesamiento asíncrono
+- Lógica de negocio pura independiente de frameworks
+- Responsabilidad: Encapsular todas las reglas de negocio y el conocimiento del dominio
+
+**Infrastructure Layer** (`src/infrastructure/`)
+- Repositorios Spring Data JPA que implementan interfaces del dominio
+- Entidades JPA mapeadas a tablas de base de datos
+- Migraciones de base de datos y gestión del esquema
+- Integraciones con servicios externos (APIs, colas de mensajes, etc.)
+- Configuración e implementaciones específicas del framework
+- Mecanismos de persistencia y patrones de acceso a datos
+- Responsabilidad: Implementación técnica del acceso a datos e integraciones externas
+
+### Principios arquitectónicos clave
+
+**Dependency Direction**: Las dependencias apuntan siempre hacia dentro, hacia la capa domain
+- Presentation → Application → Domain ← Infrastructure
+- La capa domain solo depende de sí misma (sin dependencias externas)
+- Infrastructure implementa interfaces del domain, no al revés
+
+**Separation of Concerns**: Cada capa tiene responsabilidades distintas
+- Sin lógica de negocio en controllers
+- Sin preocupaciones de infraestructura en modelos de dominio
+- Los DTOs separan contratos API de representaciones internas
+
+**DDD Integration**: La capa domain es el núcleo
+- Entities, Value Objects y Aggregates residen en domain
+- Interfaces de repositorio definidas en domain, implementadas en infrastructure
+- Domain services manejan lógica de negocio compleja
+- Application services coordinan operaciones del dominio
+
+### Estructura del proyecto
+
+```
+backend/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── empresa/
+│   │   │           └── [appname]/
+│   │   │               ├── config/              # Spring configuration
+│   │   │               │   ├── SecurityConfig.java
+│   │   │               │   ├── WebConfig.java
+│   │   │               │   └── JpaConfig.java
+│   │   │               │
+│   │   │               ├── domain/              # Domain Layer (DDD Core)
+│   │   │               │   ├── model/           # Domain entities
+│   │   │               │   │   ├── [AggregateRoot].java
+│   │   │               │   │   └── [Entity].java
+│   │   │               │   ├── repository/      # Repository interfaces
+│   │   │               │   │   ├── I[Entity]Repository.java
+│   │   │               │   │   └── I[AggregateRoot]Repository.java
+│   │   │               │   ├── service/         # Domain services
+│   │   │               │   │   └── [Domain]DomainService.java
+│   │   │               │   ├── valueobject/     # Value Objects (immutable)
+│   │   │               │   │   └── [ValueObject].java
+│   │   │               │   └── event/           # Domain Events
+│   │   │               │       └── [Event]DomainEvent.java
+│   │   │               │
+│   │   │               ├── application/         # Application Layer
+│   │   │               │   ├── service/         # Application services
+│   │   │               │   │   └── [UseCase]Service.java
+│   │   │               │   ├── dto/             # Data Transfer Objects
+│   │   │               │   │   ├── request/     # Request DTOs
+│   │   │               │   │   │   └── Create[Entity]Request.java
+│   │   │               │   │   └── response/    # Response DTOs
+│   │   │               │   │       └── [Entity]Response.java
+│   │   │               │   ├── mapper/          # DTO Mappers
+│   │   │               │   │   └── [Entity]Mapper.java
+│   │   │               │   └── validator/       # Custom validators
+│   │   │               │       └── [Entity]Validator.java
+│   │   │               │
+│   │   │               ├── infrastructure/      # Infrastructure Layer
+│   │   │               │   ├── persistence/     # JPA implementations
+│   │   │               │   │   ├── entity/      # JPA entities
+│   │   │               │   │   │   └── [Entity]Entity.java
+│   │   │               │   │   ├── repository/  # Repository implementations
+│   │   │               │   │   │   ├── [Entity]JpaRepository.java
+│   │   │               │   │   │   └── [Entity]RepositoryImpl.java
+│   │   │               │   │   └── mapper/      # Entity mappers
+│   │   │               │   │       └── [Entity]EntityMapper.java
+│   │   │               │   ├── external/        # External service integrations
+│   │   │               │   │   └── [ExternalService].java
+│   │   │               │   └── config/          # Infrastructure config
+│   │   │               │       └── PersistenceConfig.java
+│   │   │               │
+│   │   │               ├── presentation/        # Presentation Layer
+│   │   │               │   ├── controller/      # REST controllers
+│   │   │               │   │   └── [Entity]Controller.java
+│   │   │               │   ├── dto/             # API request/response DTOs
+│   │   │               │   │   └── [Entity]ApiDto.java
+│   │   │               │   └── exception/       # Exception handling
+│   │   │               │       └── GlobalExceptionHandler.java
+│   │   │               │
+│   │   │               └── [AppName]Application.java # Spring Boot entry point
+│   │   │
+│   │   └── resources/
+│   │       ├── application.yml
+│   │       └── db/
+│   │           ├── migration/
+│   │           │   └── V[N]__[description].sql
+│   │           └── seed/
+│   │               └── [seed_data].sql
+│   │
+│   └── test/
+│       ├── java/
+│       │   └── com/
+│       │       └── empresa/
+│       │           └── [appname]/
+│       │               ├── domain/              # Domain layer tests
+│       │               └── application/         # Application layer tests
+│       └── resources/
+│           ├── application-test.yml
+│           └── test-data.sql
+│
+├── pom.xml                                      # Maven configuration
+├── Dockerfile                                   # Docker image
+├── docker-compose.yml                           # Environment setup
+└── .dockerignore                                # Docker ignore patterns
+```
+
+### Architectural Design Patterns
+
+**Repository Pattern**: Abstrae la lógica de acceso a datos
+- Los repositorios del domain definen contratos
+- Los repositorios de infrastructure implementan el acceso a datos
+- Permite cambiar mecanismos de almacenamiento
+
+**Mapper Pattern**: Transforma entre capas
+- Entity mappers (JPA ↔ Domain)
+- DTO mappers (Domain ↔ API)
+- Mantiene la separación entre capas
+
+**Service Layer Pattern**: Orquesta operaciones de negocio
+- Los Application services usan repositorios
+- Los Domain services manejan lógica de dominio compleja
+- Separación clara de responsabilidades
+
+**Aggregate Pattern**: Agrupa entidades relacionadas
+- Las aggregate roots refuerzan la consistencia
+- Fronteras transaccionales alrededor de los aggregates
+- Referenciar otros aggregates solo por ID
+
+**Factory Pattern**: Encapsula la creación compleja de objetos
+- Entity factories para modelos de dominio complejos
+- Value object factories para validación
+- Garantiza la creación de objetos válidos
+
+### Comunicación entre capas
+
+```
+Flujo de request (entrada):
+Client → Presentation (Controller) 
+       → Application (Service) 
+       → Domain (Model/Service) 
+       → Infrastructure (Repository)
+       → Database
+
+Flujo de response (salida):
+Database → Infrastructure (Repository) 
+        → Domain (Model) 
+        → Application (Mapper → DTO) 
+        → Presentation (Formatter) 
+        → Client
+
+**Nota de entrega rápida**: Presentation usa los DTOs de Application directamente, y los tests automatizados se centran en Domain y Application con Infrastructure mockeado.
+```
+
+### Estrategia de testing por capa
+
+**Domain Layer**: Unit tests sin dependencias externas
+- Probar la lógica de negocio aislada
+- Sin base de datos, sin HTTP, sin servicios externos
+
+**Application Layer**: Integration tests con infrastructure mockeada
+- Probar use cases y flujos
+- Mock de repositorios y servicios externos
+- Probar validación de entrada y transformación de datos
+
+## Principios de Domain-Driven Design
+
+### Entidades
+
+Las entidades son objetos con identidad propia que persiste en el tiempo.
+
+**Antes:**
+```java
+// Anteriormente, los datos del candidato podían manejarse como una clase de datos simple sin métodos.
+public class Candidate {
+    private Long id;
+    private String firstName;
+    private String lastName;
+    private String email;
+    // Solo getters y setters, sin lógica de negocio
+}
+```
+
+**Después:**
+```java
+package com.empresa.app.domain.model;
+
+public class Candidate {
+    private Long id;
+    private String firstName;
+    private String lastName;
+    private String email;
+    
+    // Constructor y métodos que encapsulan lógica de negocio
+    public Candidate(Long id, String firstName, String lastName, String email) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        validate();
+    }
+    
+    // Métodos de lógica de negocio
+    public void updateEmail(String newEmail) {
+        if (newEmail == null || !newEmail.contains("@")) {
+            throw new IllegalArgumentException("Formato de email inválido");
+        }
+        this.email = newEmail;
+    }
+    
+    private void validate() {
+        if (firstName == null || firstName.isBlank()) {
+            throw new IllegalArgumentException("El nombre es obligatorio");
+        }
+        if (lastName == null || lastName.isBlank()) {
+            throw new IllegalArgumentException("El apellido es obligatorio");
+        }
+        if (email == null || !email.contains("@")) {
+            throw new IllegalArgumentException("El email válido es obligatorio");
+        }
+    }
+    
+    // Getters
+    public Long getId() { return id; }
+    public String getFirstName() { return firstName; }
+    public String getLastName() { return lastName; }
+    public String getEmail() { return email; }
+}
+```
+
+**Explicación**: `Candidate` es una entidad porque tiene un identificador único (`id`) que la distingue de otras candidatos, aunque el resto de propiedades sean iguales.
+
+**Buena práctica**: Las entidades deben encapsular la lógica de negocio relacionada con su concepto de dominio y mantener la consistencia de su estado interno.
+
+### Value Objects
+
+Los Value Objects describen aspectos del dominio sin identidad conceptual. Se definen por sus atributos, no por un identificador.
+
+**Antes:**
+```java
+// Manejo de la información de educación como una clase de datos simple
+public class Education {
+    private String institution;
+    private String degree;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    // Solo getters y setters
+}
+```
+
+**Después:**
+```java
+// Uso de Java Record para Value Object inmutable (Java 21+)
+public record Education(
+    String institution,
+    String title,
+    LocalDate startDate,
+    LocalDate endDate
+) {
+    public Education {
+        if (institution == null || institution.isBlank()) {
+            throw new IllegalArgumentException("La institución es obligatoria");
+        }
+        if (startDate == null) {
+            throw new IllegalArgumentException("La fecha de inicio es obligatoria");
+        }
+        if (endDate != null && endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("La fecha de fin debe ser posterior a la fecha de inicio");
+        }
+    }
+}
+```
+
+**Explicación**: `Education` puede considerarse un Value Object en ciertos contextos, ya que describe la formación de un candidato sin requerir un identificador único. Sin embargo, en el modelo actual tiene un `id`, lo cual puede contradecir la definición pura de Value Object en DDD.
+
+**Recomendación**: Clases como `Education` y `WorkExperience` actualmente tienen identificadores únicos, por lo que se clasifican como entidades. En muchos casos, podrían tratarse como Value Objects dentro del agregado `Candidate`. Considera eliminar identificadores únicos de clases que deberían ser Value Objects o incorporarlas como parte del documento de `Candidate` si se usa una base de datos NoSQL.
+
+### Agregados
+
+Los agregados son conjuntos de objetos que deben tratarse como una unidad. Tienen una entidad raíz que hace cumplir invariantes y fronteras de consistencia.
+
+**Antes:**
+```java
+// Datos de candidato y educación gestionados por separado
+Candidate candidate = new Candidate(1L, "John", "Doe", "john@example.com");
+List<Education> educations = List.of(
+    new Education("University", "Bachelor", LocalDate.of(2010, 1, 1), LocalDate.of(2014, 1, 1))
+);
+```
+
+**Después:**
+```java
+public class Candidate {
+    private Long id;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private List<Education> educations;
+    
+    public Candidate(Long id, String firstName, String lastName, String email, List<Education> educations) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.educations = educations != null ? new ArrayList<>(educations) : new ArrayList<>();
+        validate();
+    }
+    
+    // Métodos de aggregate root
+    public void addEducation(Education education) {
+        if (education == null) {
+            throw new IllegalArgumentException("La educación no puede ser nula");
+        }
+        this.educations.add(education);
+    }
+    
+    public void removeEducation(Education education) {
+        this.educations.remove(education);
+    }
+    
+    // Getters
+    public List<Education> getEducations() {
+        return Collections.unmodifiableList(educations);
+    }
+}
+```
+
+**Explicación**: `Candidate` actúa como aggregate root que contiene `Education`, `WorkExperience`, `Resume` y `Application`. `Candidate` es la raíz del agregado, ya que las demás entidades solo tienen sentido en relación con un candidato.
+
+**Recomendación**: Los agregados deben diseñarse cuidadosamente para garantizar que todas las operaciones dentro de su frontera mantengan consistencia. Las operaciones que afecten a `Education` y `WorkExperience` deben gestionarse a través de la aggregate root `Candidate`, para mantener integridad y encapsulación.
+
+### Repositorios
+
+Los repositorios proporcionan interfaces para acceder a agregados y entidades, encapsulando la lógica de acceso a datos.
+
+**Antes:**
+```java
+// Acceso directo a base de datos sin abstracción
+public Candidate getCandidateById(Long id) {
+    return jdbcTemplate.queryForObject(
+        "SELECT * FROM candidates WHERE id = ?",
+        new Object[]{id},
+        candidateRowMapper
+    );
+}
+```
+
+**Después:**
+```java
+// Interfaz de capa domain
+public interface ICandidateRepository {
+    Optional<Candidate> findById(Long id);
+    Candidate save(Candidate candidate);
+    List<Candidate> findAll();
+    Optional<Candidate> findByEmail(String email);
+}
+
+// Implementación de capa infrastructure
+@Component
+public class CandidateRepositoryImpl implements ICandidateRepository {
+    private final CandidateJpaRepository jpaRepository;
+    private final CandidateMapper mapper;
+    
+    @Autowired
+    public CandidateRepositoryImpl(CandidateJpaRepository jpaRepository, CandidateMapper mapper) {
+        this.jpaRepository = jpaRepository;
+        this.mapper = mapper;
+    }
+    
+    @Override
+    public Optional<Candidate> findById(Long id) {
+        return jpaRepository.findById(id)
+            .map(mapper::toDomain);
+    }
+    
+    @Override
+    public Candidate save(Candidate candidate) {
+        CandidateEntity entity = mapper.toEntity(candidate);
+        CandidateEntity saved = jpaRepository.save(entity);
+        return mapper.toDomain(saved);
+    }
+    
+    @Override
+    public List<Candidate> findAll() {
+        return jpaRepository.findAll().stream()
+            .map(mapper::toDomain)
+            .collect(Collectors.toList());
+    }
+}
+```
+
+**Explicación**: `ICandidateRepository` proporciona una interfaz clara para acceder a datos de candidatos, encapsulando la lógica de acceso a datos. La implementación utiliza Spring Data JPA y mappers para convertir entre modelos de dominio y entidades JPA.
+
+**Recomendación**: 
+- Desarrollar interfaces de repositorio completas para cada entidad y agregado, garantizando que todas las interacciones con base de datos pasen por el repositorio
+- Implementar métodos de repositorio que manejen colecciones de entidades, como listas de candidatos, que puedan filtrarse o modificarse en bloque
+- Usar inyección de dependencias (Spring `@Autowired` o inyección por constructor) para inyectar repositorios JPA en las implementaciones
+
+### Servicios de dominio
+
+Los servicios de dominio contienen lógica de negocio que no pertenece de forma natural a una entidad o Value Object.
+
+**Antes:**
+```java
+// Métodos estáticos sueltos para manejar lógica de negocio
+public class CandidateUtils {
+    public static int calculateAge(Candidate candidate) {
+        LocalDate today = LocalDate.now();
+        LocalDate birthDate = candidate.getBirthDate();
+        return Period.between(birthDate, today).getYears();
+    }
+}
+```
+
+**Después:**
+```java
+// Servicio de dominio con anotación @Service
+@Service
+public class CandidateDomainService {
+    
+    public int calculateAge(Candidate candidate) {
+        if (candidate.getBirthDate() == null) {
+            throw new IllegalArgumentException("La fecha de nacimiento es obligatoria para calcular la edad");
+        }
+        LocalDate today = LocalDate.now();
+        LocalDate birthDate = candidate.getBirthDate();
+        return Period.between(birthDate, today).getYears();
+    }
+    
+    public boolean isEligibleForPosition(Candidate candidate, Position position) {
+        // Lógica de negocio que no pertenece a entidades Candidate o Position
+        return calculateAge(candidate) >= position.getMinimumAge() &&
+               candidate.getExperienceYears() >= position.getRequiredExperience();
+    }
+}
+```
+
+**Explicación**: `CandidateService` encapsula lógica de negocio relacionada con candidatos, como el cálculo de edad, proporcionando un punto centralizado y coherente para estas operaciones.
+
+### Recomendaciones adicionales
+
+**Uso de Factories**
+
+Las factories son útiles en DDD para encapsular la lógica de creación de objetos complejos y garantizar que todos los objetos creados cumplan las reglas de dominio desde su creación.
+
+**Recomendación**: Implementa factories para la creación de entidades y agregados, especialmente aquellos complejos que requieren una configuración inicial específica alineada con reglas de negocio.
+
+**Mejora en el modelado de relaciones**
+
+Las relaciones entre entidades y agregados deben ser claras y consistentes con las reglas de negocio.
+
+**Recomendación**: Revisa y, si es necesario, rediseña las relaciones entre entidades para asegurar que reflejen correctamente las necesidades y reglas del dominio. Esto puede incluir eliminar relaciones innecesarias o añadir nuevas relaciones que faciliten operaciones de negocio.
+
+**Integración de Domain Events**
+
+Los domain events son una parte importante de DDD y pueden usarse para manejar efectos secundarios de operaciones del dominio de forma desacoplada.
+
+**Recomendación**: Implementa un sistema de domain events que permita a entidades y agregados publicar eventos que otros componentes puedan procesar sin acoplamiento fuerte.
+
+## Principios SOLID y DRY
+
+### Principios SOLID
+
+Los principios SOLID son cinco principios de diseño orientado a objetos que ayudan a crear sistemas más comprensibles, flexibles y mantenibles.
+
+#### Single Responsibility Principle (SRP)
+
+Cada clase debe tener una única responsabilidad o razón de cambio.
+
+**Antes:**
+```java
+// Un método que maneja múltiples responsabilidades: validación y persistencia
+public void processCandidate(Candidate candidate) {
+    if (!candidate.getEmail().contains("@")) {
+        System.err.println("Email inválido");
+        return;
+    }
+    candidateRepository.save(candidate);
+    System.out.println("Candidato guardado");
+}
+```
+
+**Después:**
+```java
+public class Candidate {
+    // La clase ahora solo maneja lógica relacionada con el candidato
+    public void validateEmail() {
+        if (email == null || !email.contains("@")) {
+            throw new IllegalArgumentException("Email inválido");
+        }
+    }
+}
+
+@Service
+public class CandidateRepository {
+    public Candidate save(Candidate candidate) {
+        candidate.validateEmail();
+        return jpaRepository.save(mapper.toEntity(candidate));
+    }
+}
+```
+
+**Explicación**: La clase `Candidate` ahora tiene métodos separados para validación, mientras el repositorio maneja la persistencia de datos, cumpliendo el principio de responsabilidad única.
+
+**Recomendación**: Separa la lógica de acceso a datos en una capa de repositorio para adherirte mejor a SRP. Usa anotaciones de Spring `@Service` y `@Repository` para separar responsabilidades con claridad.
+
+#### Open/Closed Principle (OCP)
+
+Las entidades de software deben estar abiertas a extensión, pero cerradas a modificación.
+
+**Antes:**
+```java
+// Modificación directa de la clase para agregar funcionalidad
+public class Candidate {
+    public void saveToDatabase() {
+        // código para guardar en base de datos
+    }
+    // Para agregar nueva funcionalidad, se modifica la clase directamente
+    public void sendEmail() {
+        // código para enviar un email
+    }
+}
+```
+
+**Después:**
+```java
+public class Candidate {
+    public void saveToDatabase() {
+        // código para guardar en base de datos
+    }
+}
+
+// Extender funcionalidad sin modificar la clase existente
+public class CandidateWithEmail extends Candidate {
+    private EmailService emailService;
+    
+    public CandidateWithEmail(EmailService emailService) {
+        this.emailService = emailService;
+    }
+    
+    public void sendEmail() {
+        // código para enviar un email
+        emailService.sendEmail(this.getEmail());
+    }
+}
+```
+
+**Explicación**: La funcionalidad de envío de email se extiende en una subclase, manteniendo la clase original cerrada a modificaciones pero abierta a extensiones.
+
+**Recomendación**: Usa factory methods o el patrón builder para crear instancias y facilitar la extensión sin modificar código existente. Considera usar composición por encima de herencia cuando aplique.
+
+#### Liskov Substitution Principle (LSP)
+
+Los objetos de una clase derivada deben poder sustituir a los de la clase base sin alterar la funcionalidad del programa.
+
+**Antes:**
+```java
+// Subclase que no puede reemplazar completamente a su clase base
+public class TemporaryCandidate extends Candidate {
+    @Override
+    public void saveToDatabase() {
+        throw new UnsupportedOperationException("No se pueden guardar candidatos temporales.");
+    }
+}
+```
+
+**Después:**
+```java
+public class TemporaryCandidate extends Candidate {
+    private TemporaryStorageService storageService;
+    
+    public TemporaryCandidate(TemporaryStorageService storageService) {
+        this.storageService = storageService;
+    }
+    
+    @Override
+    public void saveToDatabase() {
+        // Implementación adecuada que permite manejo temporal
+        storageService.saveTemporarily(this);
+    }
+}
+```
+
+**Explicación**: `TemporaryCandidate` ahora proporciona una implementación adecuada que respeta el contrato de la clase base, permitiendo sustitución sin errores.
+
+**Recomendación**: Continúa usando composición para evitar violaciones de LSP y asegurar que futuras estructuras de herencia permitan sustituir clases base sin alterar el funcionamiento del programa. Prefiere interfaces y composición sobre herencia cuando sea posible.
+
+#### Interface Segregation Principle (ISP)
+
+Muchas interfaces específicas son mejores que una sola interfaz general.
+
+**Antes:**
+```java
+// Una interfaz grande que clientes pequeños no usan por completo
+public interface CandidateOperations {
+    void save();
+    void validate();
+    void sendEmail();
+    void generateReport();
+}
+```
+
+**Después:**
+```java
+public interface SaveOperation {
+    void save();
+}
+
+public interface EmailOperations {
+    void sendEmail();
+}
+
+public interface ReportOperations {
+    void generateReport();
+}
+
+public class Candidate implements SaveOperation, EmailOperations {
+    @Override
+    public void save() {
+        // implementación
+    }
+    
+    @Override
+    public void sendEmail() {
+        // implementación
+    }
+}
+```
+
+**Explicación**: Las interfaces se segregan en operaciones más pequeñas, permitiendo que las clases implementen solo las interfaces que necesitan.
+
+**Recomendación**: Define interfaces más granulares para clases de servicio y asegura que solo implementen los métodos necesarios. Usa segregación de interfaces en Java para crear interfaces enfocadas y cohesivas.
+
+#### Dependency Inversion Principle (DIP)
+
+Los módulos de alto nivel no deben depender de módulos de bajo nivel; ambos deben depender de abstracciones.
+
+**Antes:**
+```java
+// Dependencia directa de una implementación concreta
+public class Candidate {
+    private CandidateJpaRepository repository = new CandidateJpaRepository();
+    
+    public void save() {
+        repository.save(this);
+    }
+}
+```
+
+**Después:**
+```java
+public interface ICandidateRepository {
+    Candidate save(Candidate candidate);
+}
+
+public class Candidate {
+    private ICandidateRepository repository;
+    
+    // Inyección por constructor (preferida en Spring)
+    public Candidate(ICandidateRepository repository) {
+        this.repository = repository;
+    }
+    
+    public Candidate save() {
+        return repository.save(this);
+    }
+}
+
+// Spring inyectará la implementación
+@Service
+public class CandidateService {
+    private final ICandidateRepository repository;
+    
+    @Autowired
+    public CandidateService(ICandidateRepository repository) {
+        this.repository = repository;
+    }
+}
+```
+
+**Explicación**: `Candidate` ahora depende de una abstracción (`ICandidateRepository`) y no de una implementación concreta, lo que facilita flexibilidad y testing.
+
+**Recomendación**: Usa inyección de dependencias de Spring para invertir la dependencia, apoyándote en abstracciones y no en implementaciones concretas. Inyecta dependencias por constructor (preferido) o usa `@Autowired`.
+
+### DRY (Don't Repeat Yourself)
+
+El principio DRY se enfoca en reducir la duplicación en el código. Cada pieza de conocimiento debe tener una única representación, no ambigua y autoritativa dentro del sistema.
+
+**Antes:**
+```java
+// Código repetido para validar emails en múltiples funciones
+public void saveCandidate(Candidate candidate) {
+    if (candidate.getEmail() == null || !candidate.getEmail().contains("@")) {
+        throw new IllegalArgumentException("Email inválido");
+    }
+    // lógica de guardado
+}
+
+public void updateCandidate(Candidate candidate) {
+    if (candidate.getEmail() == null || !candidate.getEmail().contains("@")) {
+        throw new IllegalArgumentException("Email inválido");
+    }
+    // lógica de actualización
+}
+```
+
+**Después:**
+```java
+public class Candidate {
+    public void validateEmail() {
+        if (email == null || !email.contains("@")) {
+            throw new IllegalArgumentException("Email inválido");
+        }
+    }
+    
+    public Candidate save() {
+        this.validateEmail();
+        // lógica de guardado
+        return this;
+    }
+    
+    public Candidate update() {
+        this.validateEmail();
+        // lógica de actualización
+        return this;
+    }
+}
+```
+
+**Explicación**: La validación de email queda centralizada en un único método `validateEmail`, eliminando duplicación en las funciones de guardado y actualización.
+
+**Recomendación**: Abstrae la lógica común de operaciones de base de datos en una clase base de repositorio reutilizable o usa los métodos integrados de Spring Data JPA. Considera usar Jakarta Bean Validation (`@Email`, `@NotNull`) en lugar de validaciones manuales.
+
+## Estándares de código
+
+### Convenciones de nombres
+
+- **Nombres de variables**: Usar camelCase para variables y métodos (ej. `candidateId`, `findCandidateById()`)
+- **Nombres de clases**: Usar PascalCase para clases e interfaces (ej. `Candidate`, `CandidateRepository`)
+- **Nombres de constantes**: Usar UPPER_SNAKE_CASE para constantes (ej. `MAX_CANDIDATES_PER_PAGE`)
+- **Nombres de paquetes**: Usar minúsculas con puntos (ej. `com.empresa.app.domain.model`)
+- **Nombres de archivos**: Coincidir exactamente con el nombre de la clase (ej. `Candidate.java` para clase `Candidate`)
+
+**Ejemplos:**
+
+```java
+// Correcto: Todo en inglés
+public class CandidateRepository {
+    public Optional<Candidate> findById(Long candidateId) {
+        // Buscar candidato por ID en la base de datos
+        return jpaRepository.findById(candidateId)
+            .map(mapper::toDomain);
+    }
+}
+
+// Evitar: Comentarios o nombres en otro idioma
+public class RepositorioCandidato {
+    public Optional<Candidato> buscarPorId(Long idCandidato) {
+        // Buscar candidato por ID en la base de datos
+        return jpaRepository.findById(idCandidato)
+            .map(mapper::toDomain);
+    }
+}
+```
+
+**Mensajes de error y logs:**
+
+```java
+// Correcto: Mensajes de error en español
+throw new CandidateNotFoundException("No se encontró el candidato con el ID proporcionado");
+logger.error("Error al crear candidato", exception);
+
+// Evitar: Mensajes en otro idioma
+throw new CandidateNotFoundException("No se encontró el candidato con el ID proporcionado");
+logger.error("No fue posible crear el candidato", exception);
+```
+
+### Buenas prácticas de Java
+
+- **Usar Java Records**: Para DTOs y Value Objects inmutables (Java 14+)
+- **Usar Optional**: Para métodos que pueden retornar null
+- **Evitar `null`**: Usar Optional o colecciones vacías
+- **Objetos inmutables**: Preferir objetos inmutables cuando sea posible
+- **Usar patrón Builder**: Para construcción de objetos complejos
+- **Lombok**: Usar `@Data`, `@Builder`, `@Getter`, `@Setter` para reducir boilerplate
+
+```java
+// Correcto: Uso de Optional y Records
+public record CandidateResponse(Long id, String firstName, String lastName, String email) {}
+
+public Optional<Candidate> findById(Long id) {
+    return repository.findById(id);
+}
+
+// Evitar: Retornar null
+public Candidate findById(Long id) {
+    return repository.findById(id); // Puede retornar null
+}
+```
+
+### Manejo de errores
+
+- **Excepciones personalizadas**: Crear clases de excepción específicas del dominio
+- **@ControllerAdvice**: Usar manejador global de excepciones para respuestas de error consistentes
+- **Mensajes de error**: Proveer mensajes descriptivos para debugging
+
+```java
+// Excepción personalizada
+public class CandidateNotFoundException extends RuntimeException {
+    public CandidateNotFoundException(Long id) {
+        super("No se encontró candidato con id: " + id);
+    }
+}
+
+// Manejador global de excepciones
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    
+    @ExceptionHandler(CandidateNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCandidateNotFound(
+            CandidateNotFoundException ex) {
+        ErrorResponse error = new ErrorResponse(
+            "NOT_FOUND",
+            ex.getMessage(),
+            LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+    
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidationErrors(
+            MethodArgumentNotValidException ex) {
+        List<String> details = ex.getBindingResult()
+            .getFieldErrors()
+            .stream()
+            .map(error -> error.getField() + ": " + error.getDefaultMessage())
+            .collect(Collectors.toList());
+        
+        ErrorResponse error = new ErrorResponse(
+            "VALIDATION_ERROR",
+            "La validación falló",
+            details,
+            LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+}
+```
+
+### Patrones de validación
+
+- **Bean Validation**: Usar Jakarta Bean Validation (`@Valid`, `@NotNull`, `@Email`, etc.)
+- **Validadores personalizados**: Crear validadores para reglas complejas
+- **Validar en controller**: Validar DTOs a nivel de controller
+
+```java
+@RestController
+@RequestMapping("/api/candidates")
+public class CandidateController {
+    
+    @PostMapping
+    public ResponseEntity<CandidateResponse> createCandidate(
+            @Valid @RequestBody CreateCandidateRequest request) {
+        Candidate candidate = candidateService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(mapper.toResponse(candidate));
+    }
+}
+
+// DTO con validación
+public record CreateCandidateRequest(
+    @NotBlank(message = "El nombre es obligatorio")
+    @Size(max = 100, message = "El nombre no debe superar los 100 caracteres")
+    String firstName,
+    
+    @NotBlank(message = "El apellido es obligatorio")
+    @Size(max = 100, message = "El apellido no debe superar los 100 caracteres")
+    String lastName,
+    
+    @NotBlank(message = "El email es obligatorio")
+    @Email(message = "El email debe ser válido")
+    String email
+) {}
+```
+
+### Estándares de logging
+
+- **SLF4J**: Usar SLF4J como fachada de logging
+- **Logback**: Usar Logback como implementación de logging (por defecto en Spring Boot)
+- **Logging estructurado**: Usar logging parametrizado para mejor rendimiento
+- **Niveles de log**: Usar niveles adecuados (ERROR, WARN, INFO, DEBUG, TRACE)
+
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@Service
+public class CandidateService {
+    private static final Logger logger = LoggerFactory.getLogger(CandidateService.class);
+    
+    public Candidate create(CreateCandidateRequest request) {
+        logger.info("Creando candidato con email: {}", request.email());
+        try {
+            Candidate candidate = // ... create logic
+            logger.info("Candidato creado correctamente con id: {}", candidate.getId());
+            return candidate;
+        } catch (Exception e) {
+            logger.error("Error al crear candidato con email: {}", request.email(), e);
+            throw e;
+        }
+    }
+}
+```
+
+## Estándares de diseño de API
+
+### Endpoints REST
+
+- **Nomenclatura RESTful**: Usar convenciones RESTful para nombrar endpoints
+- **Métodos HTTP**: Usar métodos adecuados (GET, POST, PUT, DELETE, PATCH)
+- **URLs basadas en recursos**: Las URLs deben representar recursos, no acciones
+- **@RestController**: Usar anotación `@RestController` para controllers REST
+- **@RequestMapping**: Usar `@RequestMapping` a nivel de clase para paths base
+
+```java
+@RestController
+@RequestMapping("/api/candidates")
+public class CandidateController {
+    
+    @GetMapping
+    public ResponseEntity<List<CandidateResponse>> getAllCandidates() {
+        // Listar candidatos
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<CandidateResponse> getCandidateById(@PathVariable Long id) {
+        // Obtener candidato por ID
+    }
+    
+    @PostMapping
+    public ResponseEntity<CandidateResponse> createCandidate(
+            @Valid @RequestBody CreateCandidateRequest request) {
+        // Crear nuevo candidato
+    }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<CandidateResponse> updateCandidate(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateCandidateRequest request) {
+        // Actualizar candidato
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCandidate(@PathVariable Long id) {
+        // Eliminar candidato
+    }
+}
+```
+
+### Patrones request/response
+
+- **DTOs**: Usar DTOs para request/response en lugar de entidades
+- **Estructura consistente**: Mantener una estructura de respuesta consistente en todos los endpoints
+- **Códigos de estado**: Usar códigos HTTP apropiados
+- **ResponseEntity**: Usar `ResponseEntity` para control total de la respuesta HTTP
+
+```java
+// DTO de respuesta exitosa
+public record ApiResponse<T>(
+    boolean success,
+    T data,
+    String message,
+    LocalDateTime timestamp
+) {
+    public static <T> ApiResponse<T> success(T data, String message) {
+        return new ApiResponse<>(true, data, message, LocalDateTime.now());
+    }
+}
+
+// DTO de respuesta de error
+public record ErrorResponse(
+    String code,
+    String message,
+    List<String> details,
+    LocalDateTime timestamp
+) {}
+
+// Uso en controller
+@GetMapping("/{id}")
+public ResponseEntity<ApiResponse<CandidateResponse>> getCandidate(@PathVariable Long id) {
+    Candidate candidate = candidateService.findById(id)
+        .orElseThrow(() -> new CandidateNotFoundException(id));
+    
+    return ResponseEntity.ok(
+        ApiResponse.success(mapper.toResponse(candidate), "Candidato recuperado correctamente")
+    );
+}
+```
+
+### Formato de respuesta de error
+
+- **Formato consistente**: Todos los errores deben seguir la misma estructura de respuesta
+- **Códigos de error**: Usar códigos significativos para distintos tipos de error
+- **Códigos de estado HTTP**: Mapear errores a códigos HTTP adecuados
+
+```java
+// 400 Bad Request
+{
+    "code": "VALIDATION_ERROR",
+    "message": "La validación falló",
+    "details": [
+        "firstName: El nombre es obligatorio",
+        "email: El email debe ser válido"
+    ],
+    "timestamp": "2024-01-15T10:30:00"
+}
+
+// 404 Not Found
+{
+    "code": "NOT_FOUND",
+    "message": "Recurso no encontrado",
+    "details": [],
+    "timestamp": "2024-01-15T10:30:00"
+}
+
+// Implementación en GlobalExceptionHandler
+@ExceptionHandler(CandidateNotFoundException.class)
+public ResponseEntity<ErrorResponse> handleCandidateNotFound(
+        CandidateNotFoundException ex) {
+    ErrorResponse error = new ErrorResponse(
+        "NOT_FOUND",
+        ex.getMessage(),
+        Collections.emptyList(),
+        LocalDateTime.now()
+    );
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+}
+```
+
+### Configuración de CORS
+
+- **@CrossOrigin**: Usar la anotación `@CrossOrigin` o configuración global de CORS
+- **CorsConfiguration**: Configurar CORS en `WebMvcConfigurer`
+- **Configuración segura**: Permitir solo orígenes específicos en producción
+- **Credenciales**: Configurar adecuadamente el manejo de credenciales
+
+```java
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+    
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/api/**")
+            .allowedOrigins("http://localhost:3000")
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH")
+            .allowedHeaders("*")
+            .allowCredentials(true);
+    }
+}
+
+// O usar @CrossOrigin en controllers específicos
+@CrossOrigin(origins = "http://localhost:3000")
+@RestController
+@RequestMapping("/api/candidates")
+public class CandidateController {
+    // ...
+}
+```
+
+## Patrones de base de datos
+
+### Configuración de entidades JPA
+
+- **Single Source of Truth**: Las entidades JPA en `src/main/java/com/empresa/app/infrastructure/persistence/entity/` son la fuente única de verdad para la estructura de base de datos
+- **Relaciones de entidades**: Definir relaciones con anotaciones JPA (`@OneToMany`, `@ManyToOne`, `@ManyToMany`, `@OneToOne`)
+- **Convenciones de nombres**: Usar convenciones consistentes:
+    - **Clases de entidad**: PascalCase (ej. `CandidateEntity`, `PositionEntity`)
+    - **Nombres de tablas**: snake_case (ej. `candidates`, `positions`)
+    - **Nombres de columnas**: snake_case (ej. `first_name`, `created_at`)
+    - **Nombres de campos**: camelCase en código Java (ej. `firstName`, `createdAt`)
+
+**Buenas prácticas:**
+- Usar anotaciones `@Entity` y `@Table` explícitamente
+- Especificar siempre los nombres de `@Column` para evitar conflictos de estrategia de nombres
+- Usar `@CreationTimestamp` y `@UpdateTimestamp` para campos de auditoría
+- Implementar `equals()` y `hashCode()` basado en identidad de negocio, no en ID de base de datos
+
+```java
+@Entity
+@Table(name = "candidates")
+public class CandidateEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(name = "first_name", nullable = false, length = 100)
+    private String firstName;
+    
+    @Column(name = "last_name", nullable = false, length = 100)
+    private String lastName;
+    
+    @Column(name = "email", unique = true, nullable = false)
+    private String email;
+    
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+    
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EducationEntity> educations = new ArrayList<>();
+    
+    // Constructores, getters, setters, equals, hashCode
+}
+```
+
+### Migrations
+
+- **Herramienta de migración**: Usar **Flyway** para versionado de base de datos
+- **Ubicación de migraciones**: Colocar scripts en `src/main/resources/db/migration/` (Flyway)
+- **Control de versiones**: Todos los cambios de base de datos deben versionarse mediante migraciones
+- **Nomenclatura de migraciones**: Usar nombres descriptivos siguiendo las convenciones de la herramienta
+
+**Convención de nombres de Flyway:**
+```
+V{version}__{description}.sql
+Ejemplo: V1__create_candidates_table.sql
+         V2__add_email_index_to_candidates.sql
+```
+
+**Buenas prácticas:**
+- Nunca modificar archivos de migración ya aplicados en algún entorno
+- Crear nuevas migraciones para cambios de esquema
+- Revisar archivos de migración antes de aplicarlos
+- Probar migraciones en desarrollo/staging antes de producción
+- Usar transacciones en scripts de migración cuando sea posible
+
+```bash
+# Flyway: las migraciones se ejecutan automáticamente al iniciar la aplicación
+# Para ejecutar migraciones manualmente:
+mvn flyway:migrate
+
+# Para verificar estado de migraciones:
+mvn flyway:info
+
+```
+
+### Patrón de repositorio
+
+- **Interfaces de repositorio de domain**: Definir interfaces en la capa domain (`src/main/java/com/empresa/app/domain/repository/`)
+- **Implementación con Spring Data JPA**: Usar repositorios Spring Data JPA en infrastructure
+- **Métodos de repositorio personalizados**: Implementar consultas con anotaciones `@Query` o query methods
+- **Inyección de dependencias**: Usar `@Autowired` de Spring o inyección por constructor
+
+**Arquitectura:**
+1. **Capa domain**: Definir interfaces de repositorio (contratos)
+2. **Capa infrastructure**: Extender repositorios Spring Data JPA e implementar interfaces de domain
+
+```java
+// Interfaz de capa domain (src/main/java/com/empresa/app/domain/repository/)
+public interface ICandidateRepository {
+    Optional<Candidate> findById(Long id);
+    Candidate save(Candidate candidate);
+    List<Candidate> findAll();
+    Optional<Candidate> findByEmail(String email);
+    void deleteById(Long id);
+}
+
+// Capa infrastructure - repositorio Spring Data JPA
+// (src/main/java/com/empresa/app/infrastructure/persistence/repository/)
+@Repository
+public interface CandidateJpaRepository extends JpaRepository<CandidateEntity, Long> {
+    Optional<CandidateEntity> findByEmail(String email);
+    
+    @Query("SELECT c FROM CandidateEntity c WHERE c.firstName LIKE %:name% OR c.lastName LIKE %:name%")
+    List<CandidateEntity> findByNameContaining(@Param("name") String name);
+    
+    @Modifying
+    @Query("UPDATE CandidateEntity c SET c.email = :email WHERE c.id = :id")
+    void updateEmail(@Param("id") Long id, @Param("email") String email);
+}
+
+// Capa infrastructure - implementación de repositorio
+// (src/main/java/com/empresa/app/infrastructure/persistence/repository/)
+@Component
+public class CandidateRepositoryImpl implements ICandidateRepository {
+    private final CandidateJpaRepository jpaRepository;
+    private final CandidateMapper mapper;
+    
+    @Autowired
+    public CandidateRepositoryImpl(CandidateJpaRepository jpaRepository, CandidateMapper mapper) {
+        this.jpaRepository = jpaRepository;
+        this.mapper = mapper;
+    }
+    
+    @Override
+    public Optional<Candidate> findById(Long id) {
+        return jpaRepository.findById(id)
+            .map(mapper::toDomain);
+    }
+    
+    @Override
+    public Candidate save(Candidate candidate) {
+        CandidateEntity entity = mapper.toEntity(candidate);
+        CandidateEntity saved = jpaRepository.save(entity);
+        return mapper.toDomain(saved);
+    }
+    
+    @Override
+    public List<Candidate> findAll() {
+        return jpaRepository.findAll().stream()
+            .map(mapper::toDomain)
+            .collect(Collectors.toList());
+    }
+    
+    @Override
+    public Optional<Candidate> findByEmail(String email) {
+        return jpaRepository.findByEmail(email)
+            .map(mapper::toDomain);
+    }
+    
+    @Override
+    public void deleteById(Long id) {
+        jpaRepository.deleteById(id);
+    }
+}
+```
+
+### Configuración de base de datos
+
+- **Archivo de configuración**: Usar `application.yml` en `src/main/resources/`
+- **Configuración por perfiles**: Usar perfiles de Spring para distintos entornos (dev, test, prod)
+- **Connection pooling**: Usar HikariCP (por defecto en Spring Boot 3.x)
+- **Gestión de transacciones**: Usar anotación `@Transactional` en métodos de servicio
+
+```yaml
+# application.yml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/app_db
+    username: ${DB_USERNAME:app_user}
+    password: ${DB_PASSWORD:app_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  jpa:
+    hibernate:
+        ddl-auto: validate  # Nunca usar 'create' o 'update' en producción
+        show-sql: false  # Activar en true solo en desarrollo
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+  
+```
+
+### Buenas prácticas
+
+**Diseño de entidades:**
+- Mantener entidades enfocadas en persistencia
+- Usar DTOs para comunicación de API
+- Usar modelos de dominio para lógica de negocio
+- Evitar exponer entidades directamente en controllers
+
+**Optimización de consultas:**
+- Usar `@EntityGraph` para evitar problemas de consultas N+1
+- Usar `JOIN FETCH` en consultas JPQL para eager loading
+- Usar paginación (`Pageable`) para conjuntos grandes
+- Usar `@BatchSize` para carga de colecciones
+
+```java
+// Evitar consultas N+1 con EntityGraph
+@EntityGraph(attributePaths = {"educations", "workExperiences"})
+Optional<CandidateEntity> findById(Long id);
+
+// O con JOIN FETCH
+@Query("SELECT c FROM CandidateEntity c LEFT JOIN FETCH c.educations WHERE c.id = :id")
+Optional<CandidateEntity> findByIdWithEducations(@Param("id") Long id);
+
+// Paginación
+Page<CandidateEntity> findAll(Pageable pageable);
+```
+
+**Gestión de transacciones:**
+- Usar `@Transactional` en la capa de servicio, no en repositorio
+- Usar `readOnly = true` para operaciones de solo lectura
+- Manejar correctamente rollback de transacciones ante excepciones
+
+```java
+@Service
+@Transactional
+public class CandidateService {
+    
+    @Transactional(readOnly = true)
+    public Optional<Candidate> findById(Long id) {
+        // Transacción de solo lectura
+    }
+    
+    public Candidate create(Candidate candidate) {
+        // Transacción de lectura/escritura con rollback automático ante excepción
+    }
+}
+```
+
+**Campos de auditoría:**
+- Usar `@CreatedDate` y `@LastModifiedDate` con `@EntityListeners(AuditingEntityListener.class)`
+- Habilitar JPA Auditing en clase de configuración
+
+```java
+@Configuration
+@EnableJpaAuditing
+public class JpaConfig {
+}
+```
+
+## Estándares de testing
+
+> **Nota sobre skills:** No existe ningún skill instalado que cubra el stack de testing backend de este proyecto (JUnit 5 / Mockito / `@DataJpaTest` / `@SpringBootTest` / Testcontainers / JaCoCo 90%). El agente debe aplicar este estándar directamente usando su capacidad nativa. El skill `e2e-testing-patterns` cubre pruebas E2E de interfaz de usuario (Playwright/Cypress) y **no aplica** para pruebas unitarias ni de integración de servicios Java.
+
+El proyecto tiene requisitos estrictos de calidad y mantenibilidad. Estos son los estándares y buenas prácticas de unit testing que deben aplicarse.
+
+### Estructura de archivos de test
+- Usar nombres descriptivos: `[ComponentName]Test.java` para unit tests y `[ComponentName]IT.java` para integration tests
+- Ubicar tests en `src/test/java` replicando la estructura del código fuente
+- Usar JUnit 5 como framework de testing
+- Mantener umbral de cobertura del 90% en branches, functions, lines y statements
+
+### Patrón de organización de tests
+Plantilla:
+```java
+@ExtendWith(MockitoExtension.class)
+class CandidateServiceTest {
+    
+    @Mock
+    private ICandidateRepository candidateRepository;
+    
+    @InjectMocks
+    private CandidateService candidateService;
+    
+    @BeforeEach
+    void setUp() {
+        // Configuración de datos de prueba
+    }
+    
+    @Nested
+    @DisplayName("Cuando se busca candidato por ID")
+    class FindByIdTests {
+        @Test
+        @DisplayName("Debe retornar candidato cuando existe")
+        void shouldReturnCandidateWhenFound() {
+            // Arrange
+            Long candidateId = 1L;
+            Candidate candidate = new Candidate(candidateId, "John", "Doe", "john@example.com");
+            when(candidateRepository.findById(candidateId)).thenReturn(Optional.of(candidate));
+            
+            // Act
+            Optional<Candidate> result = candidateService.findById(candidateId);
+            
+            // Assert
+            assertThat(result).isPresent();
+            assertThat(result.get().getId()).isEqualTo(candidateId);
+            verify(candidateRepository).findById(candidateId);
+        }
+    }
+}
+```
+
+Ejemplo real:
+```java
+@ExtendWith(MockitoExtension.class)
+class CandidateServiceTest {
+    
+    @Mock
+    private ICandidateRepository repository;
+    
+    @InjectMocks
+    private CandidateService service;
+    
+    @BeforeEach
+    void setUp() {
+        Mockito.reset(repository);
+    }
+    
+    @Nested
+    @DisplayName("findById")
+    class FindByIdTests {
+        @Test
+        @DisplayName("Debe retornar candidato cuando existe")
+        void shouldReturnCandidateWhenFound() {
+            // Arrange
+            Long candidateId = 1L;
+            Candidate candidate = new Candidate(candidateId, "John", "Doe", "john@example.com");
+            when(repository.findById(candidateId)).thenReturn(Optional.of(candidate));
+            
+            // Act
+            Optional<Candidate> result = service.findById(candidateId);
+            
+            // Assert
+            assertThat(result).isPresent();
+            assertThat(result.get().getId()).isEqualTo(candidateId);
+            verify(repository).findById(candidateId);
+        }
+        
+        @Test
+        @DisplayName("Debe retornar vacío cuando no existe candidato")
+        void shouldReturnEmptyWhenCandidateNotFound() {
+            // Arrange
+            Long candidateId = 999L;
+            when(repository.findById(candidateId)).thenReturn(Optional.empty());
+            
+            // Act
+            Optional<Candidate> result = service.findById(candidateId);
+            
+            // Assert
+            assertThat(result).isEmpty();
+        }
+    }
+}
+```
+
+
+
+### Convención de nombres para casos de test
+- Usar `@DisplayName` para nombres descriptivos
+- Usar `@Nested` para agrupar tests relacionados
+- Seguir patrón Given-When-Then o Arrange-Act-Assert
+- Usar nombres descriptivos de método: `shouldReturnCandidateWhenFound()`, `shouldThrowExceptionWhenInvalid()`
+
+### Estructura de test (patrón AAA)
+Seguir siempre el patrón Arrange-Act-Assert:
+```java
+@Test
+@DisplayName("Debe actualizar etapa del candidato correctamente con datos válidos")
+void shouldUpdateCandidateStageSuccessfullyWhenValidDataProvided() {
+    // Arrange - Configurar datos y mocks
+    Long candidateId = 1L;
+    Long applicationId = 1L;
+    Integer newInterviewStep = 2;
+    Candidate candidate = new Candidate(candidateId, "John", "Doe", "john@example.com");
+    when(repository.findById(candidateId)).thenReturn(Optional.of(candidate));
+    
+    // Act - Ejecutar la función bajo prueba
+    Candidate result = service.updateCandidateStage(candidateId, applicationId, newInterviewStep);
+    
+    // Assert - Verificar el comportamiento esperado
+    assertThat(result).isNotNull();
+    assertThat(result.getInterviewStep()).isEqualTo(newInterviewStep);
+    verify(repository).findById(candidateId);
+}
+```
+
+Patrón de aserciones:
+- Usar aserciones de AssertJ: `assertThat()`, `isEqualTo()`, `isPresent()`, `isEmpty()`
+- Usar verificación con Mockito: `verify()`, `verifyNoMoreInteractions()`
+- Verificar tanto operaciones exitosas como condiciones de error
+- Comprobar que los mocks fueron invocados con parámetros correctos usando `ArgumentMatchers`
+- Validar valores de retorno y efectos secundarios
+
+
+
+### Estándares de mocking
+
+- Usar `@Mock` para mockear dependencias
+- Usar `@InjectMocks` para la clase bajo prueba
+- Usar `@MockBean` para tests de integración con Spring
+- Usar `when().thenReturn()` para stubbing
+- Usar `verify()` para verificar interacciones
+- Limpiar todos los mocks en `@BeforeEach` para asegurar aislamiento
+
+```java
+@ExtendWith(MockitoExtension.class)
+class CandidateServiceTest {
+    
+    @Mock
+    private ICandidateRepository repository;
+    
+    @InjectMocks
+    private CandidateService service;
+    
+    @Test
+    void shouldCreateCandidateSuccessfully() {
+        // Arrange
+        CreateCandidateRequest request = new CreateCandidateRequest(
+            "John", "Doe", "john@example.com"
+        );
+        Candidate savedCandidate = new Candidate(1L, "John", "Doe", "john@example.com");
+        when(repository.save(any(Candidate.class))).thenReturn(savedCandidate);
+        
+        // Act
+        Candidate result = service.create(request);
+        
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
+        verify(repository).save(any(Candidate.class));
+    }
+}
+```
+
+
+### Requisitos de cobertura de pruebas
+
+- **Cobertura integral**: Incluir estas categorías para cada función:
+1. **Tests de ruta exitosa**: Entradas válidas con salidas esperadas
+2. **Tests de manejo de errores**: Entradas inválidas, datos faltantes, errores de base de datos
+3. **Casos borde**: Valores límite, entradas null/undefined, datos vacíos
+4. **Tests de validación**: Validación de entradas y reglas de negocio
+5. **Puntos de integración**: Llamadas a servicios externos y operaciones de base de datos
+
+- **Umbral**: 90% en branches, functions, lines y statements
+- **Reportes de cobertura**: Generar con `mvn test jacoco:report`
+- **Archivos de cobertura**: Reportes en `target/site/jacoco/`
+- **Configuración de JaCoCo**: Configurar plugin Maven de JaCoCo en `pom.xml`
+
+```xml
+<plugin>
+    <groupId>org.jacoco</groupId>
+    <artifactId>jacoco-maven-plugin</artifactId>
+    <configuration>
+        <rules>
+            <rule>
+                <limits>
+                    <limit>
+                        <counter>BRANCH</counter>
+                        <minimum>0.90</minimum>
+                    </limit>
+                </limits>
+            </rule>
+        </rules>
+    </configuration>
+</plugin>
+```
+
+
+### Testing de errores
+- Probar tanto errores esperados como inesperados
+- Verificar que los mensajes de error sean descriptivos y útiles
+- Probar la propagación de errores entre capas de servicio
+- Asegurar códigos de estado HTTP correctos en tests de controller
+
+### Especificaciones de testing de controllers
+- Usar `@SpringBootTest` con `@AutoConfigureMockMvc` para tests de capa web
+- Mockear completamente la capa de servicio con `@MockBean`
+- Probar manejo HTTP request/response con `MockMvc`
+- Verificar parseo de parámetros y validación
+- Probar formato de respuestas de error
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+class CandidateControllerTest {
+    
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @MockBean
+    private CandidateService candidateService;
+    
+    @Autowired
+    private ObjectMapper objectMapper;
+    
+    @Test
+    void shouldCreateCandidate() throws Exception {
+        CreateCandidateRequest request = new CreateCandidateRequest(
+            "John", "Doe", "john@example.com"
+        );
+        CandidateResponse response = new CandidateResponse(1L, "John", "Doe", "john@example.com");
+        
+        when(candidateService.create(any())).thenReturn(response);
+        
+        mockMvc.perform(post("/api/candidates")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.data.firstName").value("John"));
+    }
+}
+```
+
+### Especificaciones de testing de servicios
+- Usar `@ExtendWith(MockitoExtension.class)` para unit tests
+- Mockear modelos de domain y repositorios con `@Mock`
+- Probar lógica de negocio en aislamiento
+- Verificar transformación de datos y validaciones
+- Probar manejo de errores y casos borde
+- Mockear dependencias externas (repositorios, validadores)
+
+### Testing de base de datos
+- Usar `@DataJpaTest` para tests de capa repositorio
+- Usar `Testcontainers` para tests de integración con base de datos real
+- Probar operaciones de base de datos exitosas y fallidas
+- Verificar consultas y parámetros correctos
+- Probar manejo transaccional y escenarios de rollback
+
+```java
+@DataJpaTest
+class CandidateRepositoryTest {
+    
+    @Autowired
+    private CandidateJpaRepository repository;
+    
+    @Test
+    void shouldSaveAndFindCandidate() {
+        CandidateEntity entity = new CandidateEntity();
+        entity.setFirstName("John");
+        entity.setLastName("Doe");
+        entity.setEmail("john@example.com");
+        
+        CandidateEntity saved = repository.save(entity);
+        Optional<CandidateEntity> found = repository.findById(saved.getId());
+        
+        assertThat(found).isPresent();
+        assertThat(found.get().getEmail()).isEqualTo("john@example.com");
+    }
+}
+```
+
+### Testing asíncrono
+- Usar `CompletableFuture` para probar operaciones asíncronas
+- Usar anotación `@Async` en Spring para métodos asíncronos
+- Probar escenarios de timeout con `assertTimeout()`
+- Usar `CountDownLatch` para probar operaciones concurrentes
+
+```java
+@Test
+void shouldProcessAsyncOperation() throws Exception {
+    CompletableFuture<String> future = asyncService.processAsync();
+    
+    String result = future.get(5, TimeUnit.SECONDS);
+    
+    assertThat(result).isEqualTo("expected");
+}
+```
+
+### Gestión de datos de prueba
+- Usar funciones factory para crear datos de prueba
+- Mantener datos consistentes y realistas
+- Evitar valores hardcodeados en múltiples lugares
+- Usar datos significativos que reflejen escenarios reales
+
+### Testing de integración
+
+- **Testing de controllers**: Probar manejo HTTP request/response con `@SpringBootTest` y `MockMvc`
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+class CandidateControllerIT {
+    
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @Autowired
+    private ObjectMapper objectMapper;
+    
+    @Test
+    void shouldCreateCandidateEndToEnd() throws Exception {
+        CreateCandidateRequest request = new CreateCandidateRequest(
+            "John", "Doe", "john@example.com"
+        );
+        
+        mockMvc.perform(post("/api/candidates")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.data.firstName").value("John"));
+    }
+}
+```
+
+### Estándares de calidad de código
+
+#### Buenas prácticas de Java
+- Usar tipado fuerte para parámetros y retornos de tests
+- Definir clases/records adecuados para datos de prueba
+- Usar aserciones type-safe con AssertJ
+- Aprovechar el sistema de tipos de Java para mayor confiabilidad
+- Usar patrón builder o factories de datos para objetos complejos
+
+#### Documentación
+- Escribir nombres de test claros y descriptivos que expliquen el escenario
+- Añadir comentarios en configuraciones de test complejas
+- Documentar condiciones especiales y casos borde
+- Mantener el código de test tan legible como el de producción
+
+#### Consideraciones de rendimiento
+- Mantener tests rápidos y enfocados
+- Evitar operaciones asíncronas innecesarias en tests
+- Usar estrategias de mocking adecuadas para evitar I/O real
+- Agrupar tests relacionados para minimizar overhead de setup/teardown
+
+### Integración con el flujo de desarrollo
+- Ejecutar tests antes de cada commit
+- Asegurar que todos los tests pasen antes de hacer merge
+- Usar TDD cuando sea apropiado
+- Actualizar tests al modificar funcionalidad existente
+
+### Anti-patrones comunes a evitar
+- No probar detalles de implementación; probar comportamiento
+- No crear configuraciones de test excesivamente complejas
+- No ignorar tests fallidos ni omitir escenarios de error
+- No usar conexiones reales de base de datos en unit tests
+- No crear tests que dependan de servicios externos
+- No escribir tests demasiado acoplados a la implementación
+
+### Example Test Structure
+
+
+
+## Buenas prácticas de rendimiento
+
+### Optimización de consultas de base de datos
+
+- **Seleccionar campos específicos**: Usar proyecciones DTO en lugar de cargar entidades completas
+- **Usar índices**: Asegurar índices adecuados para campos consultados frecuentemente
+- **Evitar consultas N+1**: Usar `@EntityGraph` o `JOIN FETCH` en consultas JPQL
+- **Paginación**: Usar siempre paginación en consultas de listas
+
+```java
+// Correcto: uso de EntityGraph para evitar consultas N+1
+@EntityGraph(attributePaths = {"educations", "workExperiences"})
+Optional<CandidateEntity> findById(Long id);
+
+// O con JOIN FETCH
+@Query("SELECT c FROM CandidateEntity c " +
+       "LEFT JOIN FETCH c.educations " +
+       "LEFT JOIN FETCH c.workExperiences " +
+       "WHERE c.id = :id")
+Optional<CandidateEntity> findByIdWithRelations(@Param("id") Long id);
+
+// Paginación
+Page<CandidateEntity> findAll(Pageable pageable);
+
+// Evitar: consultas N+1
+Optional<CandidateEntity> candidate = repository.findById(id);
+List<EducationEntity> educations = educationRepository.findByCandidateId(id);
+```
+
+### Operaciones asíncronas
+
+- **@Async**: Usar `@Async` para operaciones de larga duración
+- **CompletableFuture**: Usar `CompletableFuture` para operaciones en paralelo
+- **@EnableAsync**: Habilitar soporte async en configuración
+
+```java
+@Configuration
+@EnableAsync
+public class AsyncConfig {
+}
+
+@Service
+public class CandidateService {
+    
+    @Async
+    public CompletableFuture<List<Candidate>> findAllAsync() {
+        return CompletableFuture.completedFuture(findAll());
+    }
+    
+    public CompletableFuture<Void> processInParallel() {
+        CompletableFuture<List<Candidate>> candidates = findAllAsync();
+        CompletableFuture<List<Position>> positions = findAllPositionsAsync();
+        
+        return CompletableFuture.allOf(candidates, positions);
+    }
+}
+```
+
+### Caching
+
+- **@Cacheable**: Usar caché de Spring para datos de acceso frecuente
+- **@CacheEvict**: Invalidar caché cuando cambian datos
+- **@EnableCaching**: Habilitar soporte de caché
+
+```java
+@Configuration
+@EnableCaching
+public class CacheConfig {
+}
+
+@Service
+public class CandidateService {
+    
+    @Cacheable(value = "candidates", key = "#id")
+    public Optional<Candidate> findById(Long id) {
+        return repository.findById(id);
+    }
+    
+    @CacheEvict(value = "candidates", key = "#candidate.id")
+    public Candidate update(Candidate candidate) {
+        return repository.save(candidate);
+    }
+}
+```
+
+### Rendimiento en manejo de errores
+
+- **Retornos tempranos**: Retornar temprano para evitar procesamiento innecesario
+- **Propagación de errores**: Permitir propagación natural por el call stack
+- **Evitar sobreenvoltura**: No envolver errores innecesariamente
+
+## Buenas prácticas de seguridad
+
+### Validación de entrada
+
+- **Bean Validation**: Usar anotaciones Jakarta Bean Validation
+- **Validadores personalizados**: Crear validadores para reglas complejas
+- **Sanitizar datos**: Sanitizar input de usuario para prevenir ataques de inyección
+- **Type safety**: Usar sistema de tipos y validación de Java para asegurar type safety
+
+```java
+// DTO con validación
+public record CreateCandidateRequest(
+    @NotBlank(message = "El nombre es obligatorio")
+    @Size(max = 100, message = "El nombre no debe superar los 100 caracteres")
+    String firstName,
+    
+    @NotBlank(message = "El apellido es obligatorio")
+    @Size(max = 100, message = "El apellido no debe superar los 100 caracteres")
+    String lastName,
+    
+    @NotBlank(message = "El email es obligatorio")
+    @Email(message = "El email debe ser válido")
+    String email
+) {}
+```
+
+### Variables de entorno
+
+- **@Value**: Usar anotación `@Value` para propiedades de configuración
+- **@ConfigurationProperties**: Usar propiedades de configuración type-safe
+- **Nunca commitear secretos**: No commitear archivos `.env` ni secretos al control de versiones
+- **Validar entorno**: Validar variables de entorno requeridas al inicio
+
+```java
+@ConfigurationProperties(prefix = "app")
+public class AppProperties {
+    private String databaseUrl;
+    private Integer maxConnections;
+    // getters y setters
+}
+
+// Validar propiedades requeridas
+@Component
+public class EnvironmentValidator implements ApplicationListener<ApplicationReadyEvent> {
+    
+    @Value("${spring.datasource.url}")
+    private String databaseUrl;
+    
+    @Override
+    public void onApplicationEvent(ApplicationReadyEvent event) {
+        if (databaseUrl == null || databaseUrl.isBlank()) {
+            throw new IllegalStateException("La variable de entorno DATABASE_URL es obligatoria");
+        }
+    }
+}
+```
+
+### Inyección de dependencias
+
+- **Inyección por constructor**: Preferir inyección por constructor sobre field injection
+- **@Autowired**: Usar `@Autowired` en el constructor
+- **Evitar estado global**: Evitar dependencias estáticas y estado global
+- **Testabilidad**: Usar inyección de dependencias para mejorar testabilidad
+
+```java
+@Service
+public class CandidateService {
+    private final ICandidateRepository repository;
+    private final CandidateMapper mapper;
+    
+    // Inyección por constructor (preferida)
+    @Autowired
+    public CandidateService(ICandidateRepository repository, CandidateMapper mapper) {
+        this.repository = repository;
+        this.mapper = mapper;
+    }
+}
+```
+
+## Flujo de desarrollo
+
+### Flujo Git
+
+- **Feature branches**: Desarrollar funcionalidades en ramas separadas, agregando sufijo descriptivo "-backend" para trabajo paralelo y evitar conflictos
+- **Commits descriptivos**: Escribir mensajes de commit descriptivos en español
+- **Code review**: Realizar revisión de código antes de merge
+- **Ramas pequeñas**: Mantener ramas pequeñas y enfocadas
+
+### Scripts de desarrollo
+
+```bash
+# Comandos Maven
+./mvn clean install          # Compilar y ejecutar tests
+./mvn spring-boot:run       # Ejecutar aplicación
+./mvn test                  # Ejecutar tests
+./mvn test -Dtest=CandidateServiceTest  # Ejecutar test específico
+./mvn verify                # Ejecutar todas las verificaciones, incluyendo tests
+./mvn clean package         # Construir archivo JAR
+./mvn test jacoco:report    # Ejecutar tests con reporte de cobertura
+
+# Comandos Docker
+docker-compose up -d         # Iniciar servicios
+docker-compose down          # Detener servicios
+docker-compose logs -f backend  # Ver logs
+docker-compose exec backend sh  # Ejecutar comandos en contenedor
+```
+
+### Calidad de código
+
+- **Checkstyle**: Verificación de estilo de código
+- **SpotBugs**: Análisis estático de código
+- **PMD**: Análisis de calidad de código
+- **JaCoCo**: Reporte de cobertura de código
+- **Todos los tests en verde**: Asegurar que todos los tests pasen antes de despliegue
+- **Code review**: Revisar código para validar cumplimiento de estándares
+
+```xml
+<!-- Plugins de Maven para calidad de código -->
+<plugin>
+    <groupId>org.jacoco</groupId>
+    <artifactId>jacoco-maven-plugin</artifactId>
+    <configuration>
+        <rules>
+            <rule>
+                <limits>
+                    <limit>
+                        <counter>BRANCH</counter>
+                        <minimum>0.90</minimum>
+                    </limit>
+                </limits>
+            </rule>
+        </rules>
+    </configuration>
+</plugin>
+```
+
+## Despliegue con Docker
+
+### Configuración de Dockerfile
+
+- **Build multi-stage**: Usar builds multi-stage para optimizar tamaño de imagen
+- **Imagen base**: Usar imágenes OpenJDK (Eclipse Temurin) para Java 21; no usar Oracle JDK
+- **Etapa de build**: Compilar y empaquetar la aplicación con Maven
+- **Etapa de runtime**: Usar imagen mínima con solo dependencias necesarias
+
+**Buenas prácticas:**
+- Usar `.dockerignore` para excluir archivos innecesarios
+- Aprovechar cache de capas de Docker para builds más rápidos
+- Configurar límites adecuados de memoria JVM
+- Usar usuario no-root por seguridad
+
+```dockerfile
+# Dockerfile para aplicación Spring Boot
+# Etapa 1: Build
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /app
+
+# Copiar pom.xml y descargar dependencias (capa cacheada)
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+# Copiar código fuente y compilar
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+# Etapa 2: Runtime
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+
+# Crear usuario no-root
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
+
+# Copiar JAR desde etapa de build
+COPY --from=build /app/target/*.jar app.jar
+
+# Exponer puerto
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+
+# Ejecutar aplicación
+ENTRYPOINT ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-Djava.security.egd=file:/dev/./urandom", \
+  "-jar", \
+  "app.jar"]
+```
+
+### Configuración de Docker Compose
+
+- **Definición de servicios**: Definir todos los servicios requeridos (aplicación, base de datos, etc.)
+- **Redes**: Usar redes personalizadas para aislamiento de servicios
+- **Volúmenes**: Persistir datos de base de datos y logs de aplicación
+- **Variables de entorno**: Configurar vía archivo `.env` o sección `environment`
+- **Health checks**: Configurar health checks para todos los servicios
+- **Dependencias**: Definir orden de inicio de servicios
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: app-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-app_db}
+      POSTGRES_USER: ${DB_USER:-app_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-app_password}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/src/main/resources/db/migration:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-app_user} -d ${DB_NAME:-app_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: app-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-app_db}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-app_user}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-app_password}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SERVER_PORT: 8080
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - ./backend/logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - app-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
+```
+
+### Configuración de entorno
+
+- **Archivo de entorno**: Usar archivo `.env` para desarrollo local
+- **Configuración por perfiles**: Usar perfiles de Spring para diferentes entornos
+- **Gestión de secretos**: Nunca commitear secretos; usar variables de entorno o secret management
+
+```bash
+# .env (ejemplo - nunca commitear este archivo)
+DB_NAME=app_db
+DB_USER=app_user
+DB_PASSWORD=app_password
+DB_PORT=5432
+BACKEND_PORT=8080
+SPRING_PROFILES_ACTIVE=docker
+```
+
+### Comandos de Docker Compose
+
+**Desarrollo:**
+```bash
+# Construir e iniciar todos los servicios
+docker-compose up -d
+
+# Construir e iniciar forzando rebuild
+docker-compose up -d --build
+
+# Ver logs
+docker-compose logs -f backend
+docker-compose logs -f postgres
+
+# Detener todos los servicios
+docker-compose down
+
+# Detener y eliminar volúmenes (⚠️ elimina datos de base de datos)
+docker-compose down -v
+
+# Ejecutar comandos en contenedor en ejecución
+docker-compose exec backend sh
+docker-compose exec postgres psql -U app_user -d app_db
+```
+
+**Producción:**
+```bash
+# Usar archivo compose de producción
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# Escalar servicios (si es necesario)
+docker-compose up -d --scale backend=3
+```
+
+### Override de Docker Compose para producción
+
+```yaml
+# docker-compose.prod.yml
+version: '3.8'
+
+services:
+  backend:
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: 20
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+```
+
+### Buenas prácticas
+
+**Seguridad:**
+- Nunca commitear archivos `.env` con credenciales reales
+- Usar Docker secrets o gestión externa de secretos en producción
+- Ejecutar contenedores con usuario no-root
+- Usar imágenes base mínimas (Alpine Linux)
+- Escanear imágenes en busca de vulnerabilidades
+
+**Rendimiento:**
+- Usar builds multi-stage para reducir tamaño de imagen
+- Aprovechar cache de capas de Docker
+- Configurar límites de memoria JVM adecuados
+- Usar health checks para orquestación correcta de servicios
+
+**Desarrollo:**
+- Montar código fuente como volúmenes para hot reload (solo desarrollo)
+- Usar volúmenes nombrados para persistencia de base de datos
+- Configurar aislamiento de red adecuado
+- Usar archivos override de docker-compose para configuración por entorno
+
+**Monitoreo:**
+- Habilitar Spring Boot Actuator para health checks
+- Configurar logging a stdout/stderr
+- Usar drivers de logging de Docker para agregación de logs
+- Monitorear consumo de recursos de contenedores
+
+```yaml
+# Override de desarrollo (docker-compose.dev.yml)
+version: '3.8'
+
+services:
+  backend:
+    build:
+      target: build
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/target:/app/target
+    environment:
+      SPRING_DEVTOOLS_RESTART_ENABLED: "true"
+      SPRING_PROFILES_ACTIVE: dev
+```
+
+### Archivo .dockerignore
+
+```dockerignore
+# .dockerignore
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+.git
+.gitignore
+.mvn
+mvnw
+mvnw.cmd
+*.md
+.env
+.idea
+.vscode
+*.iml
+logs/
+*.log
+```
+
+Este documento sirve como base para mantener la calidad y consistencia del código en la aplicación backend. Todos los miembros del equipo deben seguir estas prácticas para asegurar una base de código mantenible, escalable y testeable.

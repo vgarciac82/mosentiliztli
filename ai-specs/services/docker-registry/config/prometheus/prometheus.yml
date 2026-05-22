@@ -1,0 +1,45 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Prometheus — Docker Registry Metrics
+#
+# Registry exposes metrics on the debug server at registry:5001/metrics
+# (internal Docker network only — nginx blocks external access to /metrics)
+# ─────────────────────────────────────────────────────────────────────────────
+
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'docker-registry'
+
+scrape_configs:
+
+  # ── Docker Registry v2 ────────────────────────────────────────────────────
+  # Metrics exposed on the debug server (port 5001), NOT the main API port
+  - job_name: 'registry'
+    static_configs:
+      - targets: ['registry:5001']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # ── Prometheus self-monitoring ────────────────────────────────────────────
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Useful PromQL queries:
+#
+#   Push latency (p99):
+#     histogram_quantile(0.99, rate(registry_storage_action_seconds_bucket{action="PutContent"}[5m]))
+#
+#   Total pushed bytes:
+#     increase(registry_storage_bytes_total{action="PutContent"}[1h])
+#
+#   HTTP error rate:
+#     rate(registry_http_requests_total{code=~"5.."}[5m])
+#
+#   Active uploads:
+#     registry_storage_cache_requests_total
+# ─────────────────────────────────────────────────────────────────────────────

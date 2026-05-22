@@ -1,0 +1,89 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Docker Registry v2 — Configuration
+#
+# Sensitive values (S3 credentials, HTTP secret) are injected via environment
+# variables in docker-compose.yml:
+#   REGISTRY_STORAGE_S3_ACCESSKEY
+#   REGISTRY_STORAGE_S3_SECRETKEY
+#   REGISTRY_STORAGE_S3_BUCKET
+#   REGISTRY_HTTP_SECRET
+# ─────────────────────────────────────────────────────────────────────────────
+version: 0.1
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+log:
+  level: info             # debug | info | warn | error
+  format: json            # json structured logging for log aggregators
+  fields:
+    service: registry
+    environment: production
+
+# ── Storage Backend (MinIO / S3-compatible) ───────────────────────────────────
+storage:
+  s3:
+    region:          us-east-1
+    regionendpoint:  http://minio:9000    # internal Docker network; minio service name
+    # bucket and credentials are overridden by REGISTRY_STORAGE_S3_* env vars
+    bucket:          docker-registry
+    encrypt:         false               # MinIO handles encryption at rest; adjust as needed
+    secure:          false               # TLS on the internal backend is not required; nginx handles external TLS
+    v4auth:          true
+    rootdirectory:   /
+    storageclass:    STANDARD
+    multipartcopythresholdsize: 33554432 # 32 MiB — use multipart for copies > 32 MiB
+
+  # Disable S3/MinIO redirects: the internal hostname 'minio:9000' is not
+  # resolvable by external Docker clients. The registry proxies blobs itself.
+  redirect:
+    disable: true
+
+  # Prevent accidental image deletion via the API.
+  # To delete images: disable this, run GC manually, then re-enable.
+  delete:
+    enabled: false
+
+  # In-memory cache for blob descriptor lookups (reduces MinIO requests)
+  cache:
+    blobdescriptor: inmemory
+
+  # Automatic cleanup of incomplete/abandoned uploads
+  maintenance:
+    uploadpurging:
+      enabled:  true
+      age:      168h    # clean uploads older than 7 days
+      interval: 24h
+      dryrun:   false
+    readonly:
+      enabled: false    # managed dynamically by backup script if needed
+
+# ── Authentication (htpasswd / bcrypt) ────────────────────────────────────────
+# To add users: docker run --rm httpd:alpine htpasswd -Bbn <user> <pass> >> auth/htpasswd
+# To rotate:    regenerate the line and restart the registry container
+auth:
+  htpasswd:
+    realm: "Docker Registry"
+    path:  /auth/htpasswd
+
+# ── HTTP Server ───────────────────────────────────────────────────────────────
+http:
+  addr: :5000
+  # Secret for cookie/token signing. Injected via REGISTRY_HTTP_SECRET env var.
+  # Having this value consistent across restarts prevents invalidating existing tokens.
+  headers:
+    X-Content-Type-Options: [nosniff]
+    X-Frame-Options:        [DENY]
+
+  # Debug server exposes /metrics endpoint for Prometheus scraping (internal only)
+  # nginx blocks /metrics from external access
+  debug:
+    addr: :5001
+    prometheus:
+      enabled: true
+      path:    /metrics
+
+# ── Health Check ──────────────────────────────────────────────────────────────
+health:
+  storagedriver:
+    enabled:   true
+    interval:  10s
+    threshold: 3

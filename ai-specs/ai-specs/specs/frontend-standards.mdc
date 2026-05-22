@@ -1,0 +1,1310 @@
+---
+description: Estándares de desarrollo frontend, buenas prácticas y convenciones para la aplicación React app. Incluye patrones de componentes, gestión de estado, arquitectura limpia orientada a funcionalidades, lineamientos UI/UX y estándares de pruebas.
+globs: ["frontend/src/**/*.{js,jsx,ts,tsx}", "frontend/tsconfig.json", "frontend/package.json"]
+alwaysApply: true
+---
+
+# Configuración del Proyecto Frontend y Buenas Prácticas - app
+
+## Tabla de Contenidos
+
+- [Resumen](#resumen)
+- [Stack Tecnológico](#stack-tecnológico)
+  - [Tecnologías Base](#tecnologías-base)
+  - [Framework de UI](#framework-de-ui)
+  - [Gestión de Estado y Flujo de Datos](#gestión-de-estado-y-flujo-de-datos)
+  - [Framework de Pruebas](#framework-de-pruebas)
+  - [Herramientas de Desarrollo](#herramientas-de-desarrollo)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+  - [Arquitectura Limpia Orientada a Funcionalidades](#arquitectura-limpia-orientada-a-funcionalidades)
+- [Estándares de Código](#estándares-de-código)
+  - [Convenciones de Nombres](#convenciones-de-nombres)
+  - [Convenciones de Componentes](#convenciones-de-componentes)
+  - [Gestión de Estado](#gestión-de-estado)
+  - [Arquitectura de la Capa de Servicios](#arquitectura-de-la-capa-de-servicios)
+- [Estándares UI/UX](#estándares-uiux)
+  - [Integración con Tailwind CSS](#integración-con-tailwind-css)
+  - [Manejo de Formularios](#manejo-de-formularios)
+  - [Patrones de Navegación](#patrones-de-navegación)
+  - [Accesibilidad](#accesibilidad)
+- [Estándares de Pruebas](#estándares-de-pruebas)
+- [Estándares de Configuración](#estándares-de-configuración)
+  - [Configuración de TypeScript](#configuración-de-typescript)
+  - [Configuración de ESLint](#configuración-de-eslint)
+  - [Configuración de Entorno](#configuración-de-entorno)
+- [Buenas Prácticas de Rendimiento](#buenas-prácticas-de-rendimiento)
+  - [Optimización de Componentes](#optimización-de-componentes)
+  - [Optimización del Bundle](#optimización-del-bundle)
+  - [Eficiencia de API](#eficiencia-de-api)
+- [Flujo de Trabajo de Desarrollo](#flujo-de-trabajo-de-desarrollo)
+  - [Flujo Git](#flujo-git)
+  - [Scripts de Desarrollo](#scripts-de-desarrollo)
+  - [Calidad de Código](#calidad-de-código)
+- [Estrategia de Migración](#estrategia-de-migración)
+  - [Migración a TypeScript](#migración-a-typescript)
+  - [Modernización de Componentes](#modernización-de-componentes)
+- [Resumen de Buenas Prácticas](#resumen-de-buenas-prácticas)
+
+---
+
+## Resumen
+
+Este documento describe las buenas prácticas, convenciones y estándares utilizados en el frontend de app. Estas prácticas garantizan consistencia del código, mantenibilidad y una experiencia de desarrollo óptima.
+
+## Stack Tecnológico
+
+### Tecnologías Base
+- **React 19.2.0**: React moderno con componentes funcionales y hooks
+- **TypeScript 5.9.3**: Tipado estático y mejor experiencia de desarrollo
+- **Vite 7.2.4**: Herramienta de build de alta velocidad y servidor de desarrollo
+- **React Router DOM 7.9.6**: Enrutamiento y navegación del lado cliente
+- **Node 24.14.0(LTS)**: Runtime de JavaScript para desarrollo
+
+### Framework de UI
+- **Tailwind CSS 4.1.17**: Framework CSS con enfoque utility-first y responsive
+- **PostCSS 8.5.6**: Procesador CSS para transformaciones avanzadas
+- **Autoprefixer 10.4.22**: Agregado automático de prefijos de navegador
+
+### Gestión de Estado y Flujo de Datos
+- **React Hooks**: `useState`, `useEffect` para estado local
+- **Zustand 5.0.9**: Gestión de estado global simple y flexible
+- **TanStack Query (React Query) 5.90.11**: Caché, sincronización y gestión de datos de servidor
+- **TanStack Query DevTools 5.91.1**: Herramienta de desarrollo para React Query
+- **Axios 1.13.2**: Cliente HTTP para comunicación con API
+- **JWT-decode 4.0.0**: Decodificación y validación de tokens JWT
+
+### Framework de Pruebas
+- **Vitest 3.x**: Framework principal para pruebas unitarias rápidas en entorno Vite
+- **Testing Library (React) 16.x**: Pruebas de componentes orientadas al comportamiento del usuario
+- **Testing Library Jest-DOM 6.x**: Matchers semánticos para assertions sobre DOM
+- **Testing Library User Event 14.x**: Simulación realista de interacciones de usuario
+- **jsdom 26.x**: Entorno DOM para ejecución de pruebas unitarias de UI
+
+
+### Herramientas de Desarrollo
+- **ESLint 9.39.1**: Linting de código con soporte para TypeScript y React
+- **TypeScript ESLint 8.46.4**: Integración de TypeScript con ESLint
+- **ESLint Plugin React Hooks 7.0.1**: Validación de reglas de React Hooks
+- **ESLint Plugin React Refresh 0.4.24**: Validación para `react-refresh`
+
+## Estructura del Proyecto
+
+```
+frontend/
+├── public/                 # Assets estáticos
+├── src/
+│   ├── core/              # Lógica pura y configuraciones centralizadas
+│   │   ├── domain/        # Interfaces, tipos y modelos de dominio
+│   │   └── shared/        # Utilidades compartidas
+│   │       ├── api/       # Cliente Axios, cliente React Query
+│   │       ├── constants/ # Constantes globales, endpoints
+│   │       ├── providers/ # Proveedores de contexto (Query, Router)
+│   │       └── router/    # Configuración de rutas
+│   │
+│   ├── features/          # Funcionalidad por dominio
+│   │   ├── auth/          # Funcionalidad de autenticación
+│   │   │   ├── api/       # Llamadas API (privadas)
+│   │   │   ├── components/# Componentes específicos de UI
+│   │   │   ├── hooks/     # Hooks personalizados + store de Zustand
+│   │   │   ├── pages/     # Páginas/vistas
+│   │   │   ├── types/     # Tipos TypeScript locales
+│   │   │   └── index.ts   # Barrel export (API pública)
+│   │   ├── dashboard/     # Funcionalidad de tablero
+│   │   └── index.ts       # Barrel principal de funcionalidades
+│   │
+│   ├── common/            # Componentes reutilizables
+│   │   └── ui/            # Componentes atómicos (Button, Input, Layout...)
+│   │
+│   ├── App.tsx            # Componente raíz de la aplicación
+│   ├── main.tsx           # Punto de entrada de la aplicación
+│   └── index.css          # Estilos globales
+│
+├── index.html             # HTML de entrada
+├── vite.config.ts         # Configuración de Vite
+├── tsconfig.json          # Configuración de TypeScript
+├── eslint.config.js       # Configuración de ESLint
+├── tailwind.config.js     # Configuración de Tailwind CSS
+├── postcss.config.js      # Configuración de PostCSS
+├── package.json           # Dependencias y scripts
+└── nginx.conf             # Configuración de Nginx (producción)
+```
+
+### Arquitectura Limpia Orientada a Funcionalidades
+
+La arquitectura del proyecto combina **Clean Architecture** con **Feature-Driven Development**:
+
+**Capas de Clean Architecture:**
+1. **Core** (capa más interna): lógica pura, tipos, configuraciones
+2. **Features** (capa de aplicación): funcionalidad organizada por dominio
+3. **Common** (componentes compartidos): UI reutilizable
+
+**Organización por funcionalidades:**
+- Cada feature es **autocontenida** y expone solo su API pública
+- Las features **no se importan entre sí** (comunicación por eventos/callbacks)
+- Uso de **barrel exports** para una encapsulación limpia
+
+**Principios:**
+- **Separación de capas**: los componentes nunca llaman a la API directamente
+- **Encapsulación**: cada feature expone solo lo necesario
+- **Independencia**: las features pueden desarrollarse en paralelo
+- **Path aliases**: imports limpios (`@core`, `@features`, `@ui`)
+
+## Estándares de Código
+
+### Convenciones de Nombres
+
+- **Componentes**: usar PascalCase (ej. `UserProfile`, `ConceptCard`, `LayoutDashboard`)
+- **Variables y funciones**: usar camelCase (ej. `userId`, `handleSubmit`, `fetchData`)
+- **Constantes**: usar UPPER_SNAKE_CASE (ej. `API_BASE_URL`, `MAX_ITEMS`, `DEFAULT_PAGE_SIZE`)
+- **Tipos e interfaces**: usar PascalCase (ej. `UserData`, `ButtonProps`, `ConceptPayroll`)
+- **Archivos de componentes**: usar PascalCase (ej. `UserCard.tsx`, `ConceptForm.tsx`)
+- **Archivos utilitarios**: usar camelCase (ej. `apiClient.ts`, `validators.ts`, `constants.ts`)
+- **Clases CSS**: usar kebab-case (ej. `user-card`, `dashboard-header`, `btn-primary`)
+- **Hooks personalizados**: usar camelCase con prefijo `use` (ej. `useAuth`, `useConceptData`, `usePagination`)
+- **Stores de Zustand**: usar camelCase con sufijo `Store` (ej. `authStore`, `dashboardStore`)
+- **Interfaces de props**: prefijo con el nombre del componente (ej. `ButtonProps`, `UserCardProps`)
+
+**Ejemplos:**
+
+```typescript
+// ✅ Correcto: código limpio en inglés
+import React, { useState } from 'react';
+
+type UserCardProps = {
+    user: User;
+    index: number;
+    onClick: (user: User) => void;
+};
+
+const UserCard: React.FC<UserCardProps> = ({ user, index, onClick }) => {
+    const [isLoading, setIsLoading] = useState(false);
+    
+    const handleCardClick = () => {
+        onClick(user);
+    };
+    
+    return (
+        <div className="user-card" onClick={handleCardClick}>
+            {/* JSX del componente */}
+        </div>
+    );
+};
+
+// ❌ Evitar: nombres en español
+const TarjetaUsuario: React.FC<PropsTarjetaUsuario> = ({ usuario, indice, alHacerClic }) => {
+    const [estaCargando, setEstaCargando] = useState(false);
+    
+    const manejarClicTarjeta = () => {
+        alHacerClic(usuario);
+    };
+    
+    return (
+        <div className="tarjeta-usuario" onClick={manejarClicTarjeta}>
+            {/* JSX */}
+        </div>
+    );
+};
+```
+
+**Mensajes de error y logs:**
+
+```typescript
+// ✅ Correcto: mensajes en español con nombres de código en inglés
+catch (error) {
+    console.error('Error al obtener datos:', error);
+    setError('No se pudieron cargar los datos. Por favor, intente más tarde.');
+}
+```
+
+**Ejemplos con funcionalidades del proyecto:**
+
+```typescript
+// ✅ Feature de conceptos
+type ConceptCardProps = {
+    concept: ConceptPayroll;
+    onSelect: (id: number) => void;
+};
+
+const ConceptCard: React.FC<ConceptCardProps> = ({ concept, onSelect }) => {
+    return (
+        <div className="concept-card" onClick={() => onSelect(concept.id)}>
+            {concept.name}
+        </div>
+    );
+};
+
+// ✅ Servicio API
+export const conceptService = {
+    getAllConcepts: async () => {
+        try {
+            const response = await apiClient.get('/concepts');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching concepts:', error);
+            throw error;
+        }
+    }
+};
+
+// ✅ Store de Zustand
+export const useAuthStore = create((set) => ({
+    isAuthenticated: false,
+    user: null,
+    login: (credentials) => {
+        // Lógica de login
+    }
+}));
+```
+
+### Convenciones de Componentes
+
+#### Componentes Funcionales
+- **Usar siempre componentes funcionales** con hooks
+- Usar **TypeScript para componentes nuevos**
+- Los componentes deben tener **tipado fuerte**
+
+```typescript
+// ✅ Preferido: componente funcional con TypeScript
+import React, { useState, useEffect } from 'react';
+
+type ConceptPayroll = {
+    id: number;
+    name: string;
+    type: 'Income' | 'Deduction' | 'Informational';
+    active: boolean;
+};
+
+const ConceptsList: React.FC = () => {
+    const [concepts, setConcepts] = useState<ConceptPayroll[]>([]);
+    const [loading, setLoading] = useState(false);
+    
+    // Lógica del componente
+    
+    return (
+        // JSX
+    );
+};
+
+export default ConceptsList;
+```
+
+#### Props de Componentes
+- **Definir interfaces/types de TypeScript** para props
+- Usar **desestructuración** de props
+- Incluir **valores por defecto** cuando aplique
+
+```typescript
+type ConceptCardProps = {
+    concept: ConceptPayroll;
+    onEdit: (concept: ConceptPayroll) => void;
+    onDelete: (id: number) => void;
+};
+
+const ConceptCard: React.FC<ConceptCardProps> = ({ concept, onEdit, onDelete }) => {
+    return (
+        // Implementación del componente
+    );
+};
+```
+
+#### Documentación con JSDoc
+- Documentar componentes complejos con comentarios JSDoc
+- Incluir descripción, parámetros y tipos
+
+```typescript
+/**
+ * Componente para mostrar una tarjeta de concepto de nómina
+ * 
+ * Permite ver detalles del concepto y proporciona
+ * acciones para editar o eliminar.
+ * 
+ * @component
+ * @example
+ * const concept = { id: 1, name: 'Salary', type: 'Income', active: true };
+ * return <ConceptCard concept={concept} onEdit={handleEdit} onDelete={handleDelete} />
+ */
+type ConceptCardProps = {
+    /** Objeto de concepto a mostrar */
+    concept: ConceptPayroll;
+    /** Callback cuando se hace clic en editar */
+    onEdit: (concept: ConceptPayroll) => void;
+    /** Callback cuando se hace clic en eliminar */
+    onDelete: (id: number) => void;
+};
+
+const ConceptCard: React.FC<ConceptCardProps> = ({ concept, onEdit, onDelete }) => {
+    // Implementación
+};
+```
+
+### Gestión de Estado
+
+#### Estado Local con Hooks
+- Usar **useState** para estado a nivel de componente
+- Usar **useEffect** con dependencias correctas para efectos secundarios
+- **Extraer hooks personalizados** para lógica reutilizable
+- Usar **useReducer** para estado complejo con múltiples transiciones
+
+```typescript
+// ✅ Estado simple con useState
+const [formData, setFormData] = useState({
+    name: '',
+    type: 'Income',
+    active: true
+});
+
+const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+        ...prev,
+        [name]: value
+    }));
+};
+
+// ✅ Estado complejo con useReducer
+type FormState = {
+    name: string;
+    type: string;
+    active: boolean;
+};
+
+type FormAction = 
+    | { type: 'UPDATE_FIELD'; field: keyof FormState; value: string | boolean }
+    | { type: 'RESET' };
+
+const formReducer = (state: FormState, action: FormAction): FormState => {
+    switch (action.type) {
+        case 'UPDATE_FIELD':
+            return { ...state, [action.field]: action.value };
+        case 'RESET':
+            return { name: '', type: 'Income', active: true };
+        default:
+            return state;
+    }
+};
+
+const [state, dispatch] = useReducer(formReducer, initialState);
+```
+
+#### Estados de Carga y Error
+- **Manejar siempre estados de carga** para operaciones asíncronas
+- **Implementar manejo de errores** con mensajes amigables
+- **Mostrar retroalimentación al usuario** con componentes visuales
+
+```typescript
+const [data, setData] = useState<ConceptPayroll[]>([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState<string | null>(null);
+const [success, setSuccess] = useState<string | null>(null);
+
+const fetchConcepts = async () => {
+    try {
+        setLoading(true);
+        setError(null);
+        const result = await conceptService.getAllConcepts();
+        setData(result);
+        setSuccess('Conceptos cargados correctamente');
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Error desconocido';
+        setError(`Error al cargar conceptos: ${message}`);
+        console.error('Error fetching concepts:', error);
+    } finally {
+        setLoading(false);
+    }
+};
+
+useEffect(() => {
+    fetchConcepts();
+}, []);
+
+// Renderizado por estado
+if (loading) return <LoadingSpinner />;
+if (error) return <ErrorAlert message={error} />;
+if (success) return <SuccessAlert message={success} />;
+
+return <ConceptsList concepts={data} />;
+```
+
+#### Gestión de Estado Global con Zustand
+- Usar **Zustand** para estado global compartido por múltiples features
+- Mantener **stores enfocadas** en una sola responsabilidad
+- Evitar **prop drilling excesivo**
+
+```typescript
+// authStore.ts
+import { create } from 'zustand';
+
+type AuthStore = {
+    isAuthenticated: boolean;
+    user: User | null;
+    token: string | null;
+    login: (credentials: LoginCredentials) => Promise<void>;
+    logout: () => void;
+};
+
+export const useAuthStore = create<AuthStore>((set) => ({
+    isAuthenticated: false,
+    user: null,
+    token: null,
+    login: async (credentials) => {
+        try {
+            const response = await authService.login(credentials);
+            set({
+                isAuthenticated: true,
+                user: response.user,
+                token: response.token
+            });
+        } catch (error) {
+            console.error('Error logging in:', error);
+            throw error;
+        }
+    },
+    logout: () => {
+        set({
+            isAuthenticated: false,
+            user: null,
+            token: null
+        });
+    }
+}));
+
+// Uso en componentes
+const LoginForm: React.FC = () => {
+    const { login } = useAuthStore();
+    
+    const handleSubmit = async (credentials: LoginCredentials) => {
+        await login(credentials);
+    };
+};
+```
+
+#### React Query para Estado de Servidor
+- Usar **TanStack Query** para caché y sincronización de datos de servidor
+- Configurar **staleTime** y **gcTime** de forma adecuada
+- Mantener sincronizado el estado de servidor
+
+```typescript
+// hooks/useConcepts.ts
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { conceptService } from '@features/concepts/api';
+
+const CONCEPTS_QUERY_KEY = ['concepts'];
+
+export const useConcepts = () => {
+    return useQuery({
+        queryKey: CONCEPTS_QUERY_KEY,
+        queryFn: () => conceptService.getAllConcepts(),
+        staleTime: 5 * 60 * 1000, // 5 minutos
+    });
+};
+
+export const useUpdateConcept = () => {
+    const queryClient = useQueryClient();
+    
+    return useMutation({
+        mutationFn: (data: ConceptUpdateData) => 
+            conceptService.updateConcept(data.id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ 
+                queryKey: CONCEPTS_QUERY_KEY 
+            });
+        },
+    });
+};
+
+// Uso en componentes
+const ConceptForm: React.FC = () => {
+    const { mutate: updateConcept, isPending } = useUpdateConcept();
+    
+    const handleSubmit = (formData: ConceptUpdateData) => {
+        updateConcept(formData);
+    };
+};
+```
+
+### Arquitectura de la Capa de Servicios
+
+#### Servicios API con Axios
+- **Centralizar todas las llamadas API** en archivos de servicio
+- Usar **Axios con cliente tipado** para solicitudes HTTP
+- **Exportar objetos de servicio** con métodos agrupados
+- **Manejar errores a nivel de servicio** cuando corresponda
+- Usar **interceptors** para manejo global de autenticación y errores
+
+```typescript
+// core/shared/api/apiClient.ts
+import axios, { AxiosError } from 'axios';
+import { useAuthStore } from '@features/auth/hooks';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010';
+
+export const apiClient = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+// Interceptor para agregar token de autenticación
+apiClient.interceptors.request.use((config) => {
+    const token = useAuthStore.getState().token;
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
+// Interceptor para manejar errores
+apiClient.interceptors.response.use(
+    (response) => response,
+    (error: AxiosError) => {
+        if (error.response?.status === 401) {
+            // Redirigir a login
+            useAuthStore.getState().logout();
+        }
+        return Promise.reject(error);
+    }
+);
+
+export default apiClient;
+
+// features/concepts/api/conceptService.ts
+import { apiClient } from '@core/shared/api';
+import { ConceptPayroll, CreateConceptDTO } from '../types';
+
+type ConceptResponse = {
+    success: boolean;
+    data: ConceptPayroll[];
+};
+
+export const conceptService = {
+    /**
+     * Obtiene todos los conceptos de nómina
+     * @returns Promesa con arreglo de conceptos
+     */
+    getAllConcepts: async (): Promise<ConceptPayroll[]> => {
+        try {
+            const response = await apiClient.get<ConceptResponse>('/concepts');
+            return response.data.data;
+        } catch (error) {
+            console.error('Error fetching concepts:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Obtiene un concepto específico por ID
+     * @param id - ID del concepto
+     * @returns Promesa con datos del concepto
+     */
+    getConceptById: async (id: number): Promise<ConceptPayroll> => {
+        try {
+            const response = await apiClient.get<ConceptResponse>(`/concepts/${id}`);
+            return response.data.data[0];
+        } catch (error) {
+            console.error(`Error fetching concept ${id}:`, error);
+            throw error;
+        }
+    },
+
+    /**
+     * Crea un nuevo concepto de nómina
+     * @param conceptData - Datos del nuevo concepto
+     * @returns Promesa con concepto creado
+     */
+    createConcept: async (conceptData: CreateConceptDTO): Promise<ConceptPayroll> => {
+        try {
+            const response = await apiClient.post<ConceptResponse>('/concepts', conceptData);
+            return response.data.data[0];
+        } catch (error) {
+            console.error('Error creating concept:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Actualiza un concepto existente
+     * @param id - ID del concepto
+     * @param conceptData - Datos actualizados
+     * @returns Promesa con concepto actualizado
+     */
+    updateConcept: async (id: number, conceptData: Partial<CreateConceptDTO>): Promise<ConceptPayroll> => {
+        try {
+            const response = await apiClient.put<ConceptResponse>(`/concepts/${id}`, conceptData);
+            return response.data.data[0];
+        } catch (error) {
+            console.error(`Error updating concept ${id}:`, error);
+            throw error;
+        }
+    },
+
+    /**
+     * Elimina un concepto
+     * @param id - ID del concepto a eliminar
+     */
+    deleteConcept: async (id: number): Promise<void> => {
+        try {
+            await apiClient.delete(`/concepts/${id}`);
+        } catch (error) {
+            console.error(`Error deleting concept ${id}:`, error);
+            throw error;
+        }
+    }
+};
+```
+
+#### Estructura de Tipos
+- Centralizar tipos en la carpeta `types/` dentro de cada feature
+- Usar **type** para uniones y tipos simples
+- Usar **interface** para objetos extensibles
+- Separar tipos de API, componentes y store
+
+```typescript
+// features/concepts/types/index.ts
+/**
+ * Tipos para la feature de Conceptos de Nómina
+ */
+
+/**
+ * Modelo de dominio para un concepto de nómina
+ */
+export type ConceptPayroll = {
+    id: number;
+    name: string;
+    type: 'Income' | 'Deduction' | 'Informational';
+    description?: string;
+    active: boolean;
+    createdAt: string;
+    updatedAt: string;
+};
+
+/**
+ * DTO para crear un concepto
+ */
+export type CreateConceptDTO = Omit<ConceptPayroll, 'id' | 'createdAt' | 'updatedAt'>;
+
+/**
+ * Props del componente ConceptCard
+ */
+export type ConceptCardProps = {
+    concept: ConceptPayroll;
+    onEdit?: (concept: ConceptPayroll) => void;
+    onDelete?: (id: number) => void;
+};
+
+/**
+ * Estado del store de conceptos
+ */
+export type ConceptStoreState = {
+    concepts: ConceptPayroll[];
+    selectedConcept: ConceptPayroll | null;
+    setSelectedConcept: (concept: ConceptPayroll | null) => void;
+    updateConceptInStore: (concept: ConceptPayroll) => void;
+};
+```
+
+## Estándares UI/UX
+
+### Integración con Tailwind CSS
+- La base de diseño (colores, tipografía, espaciado y patrones de componentes) se define en [Design Base](./design-base.mdc). Usar los tokens y convenciones allí definidos en todos los módulos.
+- Usar **Tailwind CSS** para todos los estilos
+- Implementar enfoque **utility-first CSS**
+- Seguir un **sistema de diseño consistente** (espaciado, colores, tipografía) según Design Base
+- Mantener **grid responsivo** (mobile-first)
+- Usar **clases condicionales** para estados dinámicos
+
+```tsx
+// ✅ Correcto: uso de Tailwind CSS
+type ConceptCardProps = {
+    concept: ConceptPayroll;
+    isSelected?: boolean;
+};
+
+const ConceptCard: React.FC<ConceptCardProps> = ({ concept, isSelected = false }) => {
+    return (
+        <div
+            className={`
+                p-4 rounded-lg border-2 cursor-pointer
+                transition-all duration-200
+                ${isSelected 
+                    ? 'border-blue-500 bg-blue-50 shadow-md' 
+                    : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                }
+            `}
+        >
+            <h3 className="text-lg font-semibold text-gray-900">
+                {concept.name}
+            </h3>
+            <p className="mt-1 text-sm text-gray-600">
+                {concept.type}
+            </p>
+            {concept.description && (
+                <p className="mt-2 text-sm text-gray-700">
+                    {concept.description}
+                </p>
+            )}
+        </div>
+    );
+};
+
+// ❌ Evitar: estilos inline o CSS tradicional
+<div style={{
+    padding: '16px',
+    borderRadius: '8px',
+    border: isSelected ? '2px solid #3b82f6' : '2px solid #e5e7eb'
+}}>
+    {/* Contenido */}
+</div>
+```
+
+### Manejo de Formularios
+- Usar **componentes controlados** con handlers `onChange`
+- Implementar **validación en tiempo real** cuando aplique
+- **Deshabilitar botones** durante el envío
+- **Limpiar estado del formulario** tras envío exitoso
+- Mostrar **mensajes de error claros y específicos**
+
+```typescript
+type ConceptFormProps = {
+    onSubmit: (data: CreateConceptDTO) => Promise<void>;
+};
+
+const ConceptForm: React.FC<ConceptFormProps> = ({ onSubmit }) => {
+    const [formData, setFormData] = useState<CreateConceptDTO>({
+        name: '',
+        type: 'Income',
+        description: '',
+        active: true,
+    });
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const validateForm = (): boolean => {
+        const newErrors: Record<string, string> = {};
+        
+        if (!formData.name.trim()) {
+            newErrors.name = 'El nombre es obligatorio';
+        }
+        if (formData.name.length < 3) {
+            newErrors.name = 'El nombre debe tener al menos 3 caracteres';
+        }
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+        const { name, value, type } = e.target;
+        const finalValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+        
+        setFormData(prev => ({
+            ...prev,
+            [name]: finalValue
+        }));
+        
+        // Limpiar error de este campo
+        if (errors[name]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        if (!validateForm()) return;
+        
+        try {
+            setIsSubmitting(true);
+            await onSubmit(formData);
+            // Limpiar formulario
+            setFormData({
+                name: '',
+                type: 'Income',
+                description: '',
+                active: true,
+            });
+        } catch (error) {
+            setErrors({ submit: 'Error al guardar. Por favor, intente nuevamente.' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            {errors.submit && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                    {errors.submit}
+                </div>
+            )}
+            
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nombre *
+                </label>
+                <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className={`
+                        w-full px-3 py-2 border rounded-md text-sm
+                        focus:outline-none focus:ring-2 focus:ring-blue-500
+                        ${errors.name ? 'border-red-500' : 'border-gray-300'}
+                    `}
+                    placeholder="Ej: Salario Base"
+                />
+                {errors.name && (
+                    <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                )}
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tipo *
+                </label>
+                <select
+                    name="type"
+                    value={formData.type}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                    <option value="Income">Ingreso</option>
+                    <option value="Deduction">Deducción</option>
+                    <option value="Informational">Informativo</option>
+                </select>
+            </div>
+
+            <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`
+                    w-full px-4 py-2 rounded-md font-medium text-white
+                    transition-colors duration-200
+                    ${isSubmitting
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+                    }
+                `}
+            >
+                {isSubmitting ? 'Guardando...' : 'Guardar'}
+            </button>
+        </form>
+    );
+};
+```
+
+### Patrones de Navegación
+- Usar **React Router** para toda la navegación
+- Implementar **breadcrumbs** para contexto
+- Usar **navegación programática** con `useNavigate`
+- Manejar estados de carga en transiciones
+
+```typescript
+import { useNavigate } from 'react-router-dom';
+
+const ConceptsList: React.FC = () => {
+    const navigate = useNavigate();
+    
+    const handleViewConcept = (id: number) => {
+        navigate(`/concepts/${id}`);
+    };
+    
+    const handleBack = () => {
+        navigate(-1);
+    };
+    
+    return (
+        <div>
+            <button onClick={handleBack} className="text-blue-600 hover:underline">
+                ← Volver
+            </button>
+            {/* Contenido */}
+        </div>
+    );
+};
+```
+
+### Accesibilidad
+- Incluir atributos **aria-*** cuando sea necesario
+- Usar elementos **HTML semánticos** (`button`, `input`, `form`, etc.)
+- Garantizar **navegación por teclado** en componentes interactivos
+- Mantener **contraste de color adecuado** (mínimo WCAG AA)
+- Proveer **texto alternativo** para imágenes
+
+```tsx
+// ✅ Correcto: accesible
+<button
+    onClick={handleDelete}
+    aria-label="Eliminar concepto de nómina"
+    className="p-2 text-red-600 hover:bg-red-50 rounded"
+>
+    <TrashIcon />
+</button>
+
+<input
+    type="search"
+    placeholder="Buscar conceptos"
+    aria-label="Buscar conceptos por nombre o tipo"
+    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+/>
+
+// ❌ Evitar: no accesible
+<div onClick={handleDelete} className="cursor-pointer">
+    🗑️
+</div>
+```
+
+## Estándares de Pruebas
+
+### Pruebas Unitarias con Vitest
+- **Probar comportamiento observable** del componente/hook en lugar de implementación interna
+- Escribir pruebas con estructura usando contexto de escenario, acción y resultado esperado
+- Usar **Testing Library** para renderizado e interacción (`render`, `screen`, `userEvent`)
+- Aplicar `vi.mock` para aislar dependencias externas (servicios, router, stores)
+- Mantener pruebas por feature en archivos `*.test.ts` o `*.test.tsx`
+
+```typescript
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi } from 'vitest';
+import { ConceptForm } from './ConceptForm';
+
+describe('ConceptForm - Crear concepto', () => {
+    it('debe mostrar validación cuando el nombre está vacío', async () => {
+        // Scenario: usuario intenta guardar sin completar el campo obligatorio
+        const onSubmit = vi.fn();
+        const user = userEvent.setup();
+
+        render(<ConceptForm onSubmit={onSubmit} />);
+
+        // Action
+        await user.click(screen.getByRole('button', { name: /guardar/i }));
+
+        // Expected Result
+        expect(screen.getByText('El nombre es obligatorio')).toBeInTheDocument();
+        expect(onSubmit).not.toHaveBeenCalled();
+    });
+});
+```
+
+### Organización de Pruebas
+- **Agrupar pruebas relacionadas** con bloques `describe`
+- **Usar nombres descriptivos** en español que indiquen claramente escenario y resultado esperado
+- **Probar escenarios de éxito y error**
+- **Incluir casos límite** y validaciones
+- **Ubicar pruebas junto al código** de la feature o en carpeta `__tests__` por módulo
+
+## Estándares de Configuración
+
+### Configuración de TypeScript
+El proyecto está configurado con **modo estricto habilitado** para máxima seguridad de tipos:
+
+```json
+// tsconfig.app.json
+{
+    "compilerOptions": {
+        "strict": true,
+        "target": "ES2020",
+        "module": "ESNext",
+        "lib": ["ES2020", "DOM", "DOM.Iterable"],
+        "jsx": "react-jsx",
+        "baseUrl": ".",
+        "paths": {
+            "@core/*": ["src/core/*"],
+            "@features/*": ["src/features/*"],
+            "@ui/*": ["src/common/ui/*"],
+            "@common/*": ["src/common/*"]
+        },
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "noImplicitThis": true,
+        "alwaysStrict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true
+    }
+}
+```
+
+### Alias de Rutas
+Usar alias de rutas para imports más limpios:
+
+```typescript
+// En lugar de:
+import { UserCard } from '../../../common/ui/components/UserCard';
+import { authService } from '../../../core/services/authService';
+
+// Usar:
+import { UserCard } from '@ui/components/UserCard';
+import { authService } from '@core/services/authService';
+```
+
+### Configuración de ESLint
+El proyecto usa **ESLint 9** con configuración moderna:
+
+```javascript
+// eslint.config.js - Incluye:
+// - @eslint/js - Reglas recomendadas de JavaScript
+// - typescript-eslint - Reglas de linting para TypeScript
+// - react-hooks - Validación de reglas de React Hooks
+// - react-refresh - Soporte para react-refresh en Vite
+
+// Reglas principales:
+// - Verificación estricta de tipos
+// - Buenas prácticas de React Hooks
+// - Sin imports o variables sin uso
+// - Nomenclatura y formato consistente
+```
+
+### Configuración de Entorno
+Usar **variables de entorno** para configuración específica por ambiente:
+
+```env
+# .env.development
+VITE_API_URL=http://localhost:3010
+VITE_ENABLE_DEVTOOLS=true
+
+# .env.production
+VITE_API_URL=https://api.production.com
+VITE_ENABLE_DEVTOOLS=false
+```
+
+```typescript
+// core/shared/constants/apiConfig.ts
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010';
+export const ENABLE_DEVTOOLS = import.meta.env.VITE_ENABLE_DEVTOOLS === 'true';
+```
+
+### Configuración de Vite
+Ubicada en `vite.config.ts`:
+
+- **Puerto**: 3000 (servidor de desarrollo)
+- **API Proxy**: enruta `/api/*` al backend (`http://localhost:8080`)
+- **Path Aliases**: coincide con alias TypeScript para imports
+- **Plugins**: React Fast Refresh habilitado
+
+```typescript
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@core': path.resolve(__dirname, './src/core'),
+      '@features': path.resolve(__dirname, './src/features'),
+      '@ui': path.resolve(__dirname, './src/common/ui'),
+    },
+  },
+  server: {
+    port: 3000,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
+  },
+})
+```
+
+## Buenas Prácticas de Rendimiento
+
+### Optimización de Componentes
+- **Carga diferida (lazy load)** de componentes pesados con `React.lazy` y `Suspense`
+- Usar **React.memo()** para evitar re-renders innecesarios
+- Usar **useMemo** para cálculos costosos
+- Usar **useCallback** para funciones pasadas como props
+- Evitar **re-renders de listas** con keys únicas
+
+```typescript
+// ✅ Carga diferida de rutas
+import { lazy, Suspense } from 'react';
+import { LoadingSpinner } from '@common/ui';
+
+const ConceptPage = lazy(() => import('@features/concepts/pages/ConceptPage'));
+const DashboardPage = lazy(() => import('@features/dashboard/pages/DashboardPage'));
+
+const routes = [
+    {
+        path: '/concepts',
+        element: (
+            <Suspense fallback={<LoadingSpinner />}>
+                <ConceptPage />
+            </Suspense>
+        ),
+    },
+];
+
+// ✅ Memoización de componentes costosos
+interface ConceptListProps {
+    concepts: ConceptPayroll[];
+    onSelect: (id: number) => void;
+}
+
+const ConceptList = React.memo<ConceptListProps>(({ concepts, onSelect }) => {
+    return (
+        <div>
+            {concepts.map((concept) => (
+                <ConceptCard 
+                    key={concept.id} 
+                    concept={concept}
+                    onSelect={onSelect}
+                />
+            ))}
+        </div>
+    );
+});
+
+// ✅ useMemo para datos procesados
+const Dashboard: React.FC = () => {
+    const { data: concepts } = useConcepts();
+    
+    // Recalcula solo cuando cambia concepts
+    const conceptsByType = useMemo(() => {
+        return concepts?.reduce((acc, concept) => {
+            if (!acc[concept.type]) {
+                acc[concept.type] = [];
+            }
+            acc[concept.type].push(concept);
+            return acc;
+        }, {} as Record<string, ConceptPayroll[]>) || {};
+    }, [concepts]);
+    
+    return (
+        <div>
+            {Object.entries(conceptsByType).map(([type, items]) => (
+                <div key={type}>
+                    <h3>{type}</h3>
+                    <ConceptList concepts={items} />
+                </div>
+            ))}
+        </div>
+    );
+};
+
+// ✅ useCallback para callbacks en props
+const ConceptForm: React.FC<ConceptFormProps> = ({ onSubmit }) => {
+    const handleSubmit = useCallback(
+        async (data: CreateConceptDTO) => {
+            await onSubmit(data);
+        },
+        [onSubmit]
+    );
+    
+    return <form onSubmit={handleSubmit}>{/* JSX */}</form>;
+};
+```
+
+### Optimización del Bundle
+- **Code splitting** automático en rutas principales
+- **Tree shaking** habilitado para eliminar código no usado
+- **Minificación** en build de producción
+- **Lazy loading de imágenes**
+- Usar **imports dinámicos** para módulos grandes
+
+```typescript
+// Import dinámico para modal con lógica pesada
+const ConceptModal = lazy(() => import('./ConceptModal'));
+
+// Uso en componente
+{showModal && (
+    <Suspense fallback={null}>
+        <ConceptModal onClose={() => setShowModal(false)} />
+    </Suspense>
+)}
+```
+
+### Eficiencia de API
+- **Implementar caché** con React Query
+- **Deduplicar solicitudes** automáticamente
+- **Invalidar caché selectivamente** después de mutaciones
+- **Usar polling con intervalo** cuando sea necesario
+- **Limitar resultados** con paginación
+
+```typescript
+// Configuración de React Query con staleTime
+export const useConcepts = (pageSize = 20) => {
+    return useQuery({
+        queryKey: ['concepts'],
+        queryFn: () => conceptService.getAllConcepts(),
+        staleTime: 5 * 60 * 1000, // 5 minutos
+        gcTime: 10 * 60 * 1000,   // 10 minutos
+    });
+};
+
+// Refetch selectivo después de actualización
+const { mutate } = useMutation({
+    mutationFn: (data) => conceptService.updateConcept(data),
+    onSuccess: () => {
+        queryClient.invalidateQueries({
+            queryKey: ['concepts'],
+            exact: false,
+        });
+    },
+});
+```
+
+## Flujo de Trabajo de Desarrollo
+
+- **Feature Branches**: desarrollar funcionalidades en ramas separadas, agregando sufijo descriptivo `-frontend` para trabajo paralelo sin colisiones
+- **Commits Descriptivos**: escribir mensajes de commit descriptivos en español
+- **Code Review**: revisión de código antes de merge
+- **Ramas Pequeñas**: mantener ramas pequeñas y enfocadas
+
+### Scripts de Desarrollo
+```bash
+npm start          # Servidor de desarrollo
+npm test           # Ejecutar pruebas unitarias
+npm run test:watch # Ejecutar pruebas unitarias en modo watch
+npm run test:coverage # Generar reporte de cobertura con Vitest
+npm run build      # Build de producción
+```
+
+### Calidad de Código
+- **Validación ESLint** antes de commits
+- **Compilación TypeScript** sin errores
+- **Todas las pruebas pasando** antes de despliegue
+- **Monitoreo de rendimiento** con Web Vitals
+
+## Estrategia de Migración
+
+### Migración a TypeScript (Gradual)
+- **Componentes nuevos en TypeScript** por defecto
+- **Mantener JavaScript** en componentes existentes estables
+- **Agregar tipos de forma incremental** al código existente
+- **No migrar todo de una sola vez**
+
+```typescript
+// ✅ Nuevo componente: TypeScript desde el inicio
+const NewConceptForm: React.FC<ConceptFormProps> = ({ onSubmit }) => {
+    // Implementación tipada
+};
+
+// Componente legado - migrar gradualmente
+const LegacyComponent = ({ data }) => {
+    // Migrar en el futuro cuando se refactorice
+};
+```
+
+### Modernización de Componentes
+- **Componentes funcionales** en lugar de class components
+- **Hooks** en lugar de métodos de ciclo de vida
+- **Tailwind CSS** en lugar de CSS modules o styled-components
+- **React Router v6+** para enrutamiento moderno
+
+## Resumen de Buenas Prácticas
+
+- Mantener una arquitectura por capas y orientada a funcionalidades
+- Priorizar TypeScript estricto, tipado explícito y servicios centralizados
+- Usar Tailwind, React Query y Zustand con responsabilidades claras
+- Construir interfaces accesibles, responsivas y con feedback de estado
+- Garantizar calidad con linting, pruebas y revisión de código continua
+
+Este documento debe consultarse regularmente durante el desarrollo para asegurar consistencia y calidad en toda la aplicación.

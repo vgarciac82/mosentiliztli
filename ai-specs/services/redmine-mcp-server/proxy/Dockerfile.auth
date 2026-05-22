@@ -1,0 +1,6 @@
+FROM python:3.13-alpine
+WORKDIR /app
+COPY mcp_auth_validator.py .
+ENV VALIDATOR_PORT=9090
+EXPOSE 9090
+CMD ["python", "-u", "mcp_auth_validator.py"]

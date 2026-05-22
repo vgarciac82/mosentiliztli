@@ -1,0 +1,22 @@
+# Enforce consistent line endings across OS
+# Critical: shell scripts MUST use LF or they break on Linux
+
+* text=auto
+
+# Shell scripts: always LF
+*.sh text eol=lf
+
+# Config / Compose files: always LF
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.conf text eol=lf
+*.cnf  text eol=lf
+
+# Env templates: always LF
+.env*  text eol=lf
+
+# Certificates: binary-safe
+*.crt  binary
+*.key  binary
+*.pem  binary
+*.p12  binary

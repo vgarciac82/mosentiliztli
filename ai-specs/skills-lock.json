@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "skills": {
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "scope": "project",
+      "computedHash": "645b891da1edbae76ab79c7b088d4e73397464f8396edaf773c0e01971ce75d6"
+    },
+    "prd": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "scope": "project",
+      "computedHash": "1f3e1f005fc40fda85d250ae906c8ee4f7e8e833e23adfeca6542c19609fd7cd"
+    },
+    "api-design-principles": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "scope": "project",
+      "computedHash": "d1a488aa9b8497f271c20e6774d66b7662f661ec0ead87089e45be364b86b071"
+    },
+    "api-security-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "scope": "project",
+      "computedHash": "2a007ac2aa52a42effe809dea721d244ab260dc1e7af5e2b50a8f60b5b3bae41"
+    },
+    "database-migration": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "scope": "project",
+      "computedHash": "b9a990b9283b734edadbde36df0f1fed62c78112100b21d6c8f4936d5d0842d5"
+    },
+    "e2e-testing-patterns": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "scope": "project",
+      "computedHash": "5f7e8269314e07291a69ec0f6f2630c3ba6b5d481d963a3afe31498582676fcb"
+    },
+    "frontend-design": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "scope": "project",
+      "computedHash": "70044bbc8e4c21d23b8c8b864956aa1515c1c6cb2f9df14148dbb8c4af6187e5"
+    },
+    "git-advanced-workflows": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "scope": "project",
+      "computedHash": "a9bc87592eee91a0bce5c00f26a13ede99ad5f4f469f23498e5821489e3a5698"
+    },
+    "receiving-code-review": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "scope": "project",
+      "computedHash": "c9382e92b8f32363566068ecfed19d3b2651eaf40d3942b24840f839dedfc406"
+    },
+    "requesting-code-review": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "scope": "project",
+      "computedHash": "a5ff68586ccf62d1803cedeb71d60fd96ec05591d29c8d123196117eefd34cd0"
+    },
+    "spring-boot-openapi-documentation": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "scope": "project",
+      "computedHash": "98365f51e0dec20670e6a50561c079468318729ad7360c7808aa2d77ab05a8f2"
+    },
+    "systematic-debugging": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "scope": "project",
+      "computedHash": "4999cb851360485eca5074e727bbdd62ef20549c5d5b01216fcbf5831badb473"
+    },
+    "webapp-testing": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "scope": "project",
+      "computedHash": "8bc27790f6e6dfc2bfa6692326d4518baacf6a31dcc646d963c729adad2f7e34"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins-server
+    restart: on-failure
+    ports:
+      - "8087:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins-data:/var/jenkins_home
+    networks:
+      - jenkins-net
+
+networks:
+  jenkins-net:
+    driver: bridge
+    # Como buena práctica de red, definimos explícitamente el driver
+
+volumes:
+  jenkins-data:
+    # Volumen gestionado por Docker para asegurar la persistencia

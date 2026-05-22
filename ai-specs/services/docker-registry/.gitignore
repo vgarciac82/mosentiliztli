@@ -1,0 +1,28 @@
+# ── Secrets & Credentials (NEVER commit) ──────────────────────────────────────
+.env
+
+# htpasswd file contains hashed user credentials
+auth/htpasswd
+auth/*.htpasswd
+
+# ── TLS Private Keys (NEVER commit) ───────────────────────────────────────────
+certs/*.key
+certs/*.pem
+certs/*.p12
+# NOTE: certs/*.crt (public certificates) are intentionally NOT ignored
+# so clients can copy them for trust configuration
+
+# ── Backups ────────────────────────────────────────────────────────────────────
+backups/
+
+# ── Logs ───────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── OS / Editor artifacts ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~

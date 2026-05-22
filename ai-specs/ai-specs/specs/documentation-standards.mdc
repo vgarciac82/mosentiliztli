@@ -1,0 +1,54 @@
+---
+description: Estándares y buenas prácticas para la documentación técnica del proyecto, incluyendo estructura, procesos de actualización y reglas de idioma.
+globs:
+alwaysApply: true
+---
+# Reglas y patrones para documentación y AI specs
+
+## Introducción
+
+La documentación técnica aplica a toda la documentación relativa al proyecto: modelo de datos, README, API specs y otros documentos MD que describen cómo está estructurado, se ejecuta y opera el proyecto.
+AI specs son los documentos que explican a los agentes de IA cómo comportarse, documentar, planificar, codificar, etc., e incluyen acuerdos de equipo, estándares y convenciones.
+
+## Reglas generales
+
+- **Redactar siempre en español** el texto narrativo de la documentación y de los AI specs (instrucciones, descripciones, títulos, párrafos). La **terminología técnica** (nombres de frameworks, herramientas, estándares, archivos como data-model.md, api-spec.yml, *-standards.mdc) se mantiene en inglés. Esto aplica tanto al crear documentación nueva como al actualizar la existente, y también a la documentación dentro del código (comentarios, explicaciones de funciones o campos, etc.) en lo que respecta al idioma del proyecto.
+
+## Documentación técnica
+
+Antes de cualquier commit o git push, o si se pide documentar un commit, se debe SIEMPRE revisar qué documentación técnica debe actualizarse.
+
+### Regla de actualización de api-spec.yml
+
+Ante cualquier cambio en un endpoint REST — nuevo endpoint, modificación de request/response, nuevo parámetro, cambio de status code o eliminación — **actualizar `ai-specs/specs/api-spec.yml` antes del commit**. Esta regla es obligatoria y no admite excepciones. El contrato OpenAPI debe reflejar siempre el estado real de la API en el repositorio.
+
+Al actualizar documentación, se debe:
+1. Revisar todos los cambios recientes en el codebase
+2. Identificar qué archivos de documentación requieren actualización según los cambios. Algunos ejemplos claros:
+   - Cambios en el modelo de datos: actualizar la sección de definición del modelo en data-model.md
+   - Cambios en la API: actualizar `ai-specs/specs/api-spec.yml` **antes del commit**
+   - Cambios en librerías, migraciones de base de datos o en lo que afecte el proceso de instalación: actualizar *-standards.mdc
+3. Actualizar cada archivo de documentación afectado en español (narrativa), manteniendo la consistencia con la documentación existente
+4. Asegurar que toda la documentación esté correctamente formateada y siga la estructura establecida
+5. Verificar que todos los cambios queden reflejados con precisión en la documentación
+6. Reportar qué archivos se actualizaron y qué cambios se realizaron
+
+## AI specs
+
+Esta regla establece un proceso obligatorio para que la IA:
+*   Aprenda del feedback, la guía y las sugerencias del usuario durante las interacciones
+*   Identifique oportunidades de mejorar las Development Rules existentes a partir de esos aprendizajes de forma proactiva
+*   Mantenga la asistencia de la IA alineada con las necesidades del proyecto y las expectativas del usuario
+*   Incorpore el feedback del usuario en el marco operativo de la IA para maximizar su valor
+
+La regla aplica después de cualquier interacción en la que el usuario aporte feedback explícito o implícito, sugerencias, correcciones, información nueva o exprese preferencias. **La IA DEBE analizar activamente todas las interacciones del usuario en busca de esas oportunidades de aprendizaje, no solo esperar pasivamente feedback directo, para refinar de forma proactiva su comprensión y las buenas prácticas del proyecto.**
+
+### Errores frecuentes y anti-patrones que la IA debe evitar
+
+*   **Saltarse el proceso de aprobación:** Aplicar modificaciones a las reglas sin obtener primero revisión y aprobación explícita del usuario.
+*   **Propuestas desvinculadas:** Proponer cambios de reglas sin conectar claramente con el feedback concreto del usuario o los aprendizajes de la interacción.
+*   **Modificaciones imprecisas:** Sugerir cambios sin identificar con precisión qué regla o qué secciones concretas deben cambiarse, dificultando la revisión efectiva por el usuario.
+*   **Feedback no atendido:** No iniciar el proceso de aprendizaje y revisión cuando el usuario aporte feedback relevante que podría mejorar las reglas.
+*   **Scope creep:** Actualizar varias reglas no relacionadas a la vez o hacer cambios que excedan el alcance del feedback recibido.
+*   **Cambios de reglas no solicitados:** Modificar reglas de forma proactiva cuando no hay conexión directa con feedback del usuario o una oportunidad de aprendizaje. Las actualizaciones de reglas deben ser reactivas y guiadas por feedback.
+*   **Falta de confirmación tras la actualización:** No notificar al usuario después de que una modificación de regla se haya implementado correctamente tras su aprobación.

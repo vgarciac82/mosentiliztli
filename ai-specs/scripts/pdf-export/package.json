@@ -1,0 +1,14 @@
+{
+  "name": "pdf-export",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "export": "node export-markdown-pdf.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "marked": "^15.0.7",
+    "mermaid": "^11.6.0",
+    "puppeteer-core": "^24.7.1"
+  }
+}

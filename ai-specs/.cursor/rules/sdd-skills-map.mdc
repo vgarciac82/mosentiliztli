@@ -1,0 +1,100 @@
+---
+description: Mapeo de fases SDD a skills aplicables, con advertencias explícitas sobre brechas conocidas. Consultar antes de seleccionar un skill para cualquier tarea del ciclo de vida.
+alwaysApply: true
+---
+
+# Mapa SDD → Skills — SAI Nómina
+
+Referencia rápida para que el agente seleccione el skill correcto en cada fase del flujo SDD. Las advertencias de brecha son **obligatorias** y no deben ignorarse.
+
+---
+
+## Tabla de cobertura por fase
+
+| Fase / Gate | Comando | Skill aplicable | Estado |
+|---|---|---|---|
+| Fase 0: Discovery Gate | — | `prd` | ✅ |
+| Fase 1: PRD | — | `prd` | ✅ |
+| Fase 2: Gate-PRD | — | `prd` | ✅ |
+| Fase 3: ADRs / UX Flows | — | Capacidad nativa del agente | ⚠️ sin skill |
+| Fase 4: Crear ticket Redmine | `/create-us` | MCP `redmine-cnf` | ✅ |
+| Fase 5: Enriquecer ticket | `/enrich-us` | MCP `redmine-cnf` | ✅ |
+| Fase 6: Gate-final | — | Capacidad nativa + `flujo-desarrollo-standards.md` | ⚠️ sin enforcement |
+| Fase 7: Plan backend | `/plan-backend-ticket` | Capacidad nativa + `backend-standards.mdc` | ⚠️ sin skill Java |
+| Fase 7: Plan frontend | `/plan-frontend-ticket` | Capacidad nativa + `frontend-standards.mdc` | ✅ |
+| Fase 8: Implementación backend (API REST) | `/develop-backend` | `api-design-principles` | ✅ |
+| Fase 8: Implementación backend (OpenAPI doc) | `/develop-backend` | `spring-boot-openapi-documentation` ⚠️ | ⚠️ bajo respaldo |
+| Fase 8: Implementación backend (testing) | `/develop-backend` | **Ver advertencia crítica abajo** | ❌ brecha |
+| Fase 8: Implementación backend (migraciones DB) | `/develop-backend` | `database-migration` (genérico) | ⚠️ parcial |
+| Fase 8: Implementación frontend | `/develop-frontend` | `frontend-design` | ✅ |
+| Gate 4: Debugging | — | `systematic-debugging` | ✅ |
+| Gate 4: Testing E2E frontend | — | `webapp-testing` + `e2e-testing-patterns` | ✅ |
+| Gate 4: Testing backend (unitario/integración) | — | **Ver advertencia crítica abajo** | ❌ brecha |
+| Gate 4: Code Review (solicitar) | — | `requesting-code-review` | ✅ |
+| Gate 4: Code Review (recibir) | — | `receiving-code-review` | ✅ |
+| Gate 4: Git / branches / PR | — | `git-advanced-workflows` | ✅ |
+| Gate 4: Security check | — | `api-security-best-practices` + **ver advertencia abajo** | ⚠️ parcial |
+| Gate 4: Documentación técnica | — | `spring-boot-openapi-documentation` ⚠️ | ⚠️ bajo respaldo |
+| Despliegue / DevOps | — | Capacidad nativa + `deploy-standards.md` | ❌ sin skill |
+| Observabilidad / Métricas | — | Capacidad nativa + `backend-standards.mdc` | ❌ sin skill |
+
+---
+
+## Advertencias de brecha — Lectura obligatoria
+
+### Brecha crítica: Testing backend Java
+
+> **El skill `e2e-testing-patterns` NO aplica para testing backend Java.**
+>
+> Este skill cubre pruebas end-to-end de interfaz de usuario (Playwright/Cypress), no pruebas unitarias ni de integración de servicios Java. Su uso para tareas de testing backend es incorrecto.
+>
+> **Acción requerida:** Para cualquier tarea de testing backend (JUnit 5, Mockito, `@DataJpaTest`, `@SpringBootTest`, Testcontainers, JaCoCo 90%), usar exclusivamente la capacidad nativa del agente guiada por `ai-specs/specs/backend-standards.mdc` sección "Estándares de testing".
+
+---
+
+### Brecha importante: Seguridad IDOR / SSO
+
+> **El skill `api-security-best-practices` NO reemplaza el checklist IDOR del proyecto.**
+>
+> Este skill proporciona principios generales de seguridad en APIs (autenticación, validación de input, rate limiting). No aborda los requerimientos específicos de `ai-specs/specs/security-standards.md`:
+> - Requisitos AC1–AC11 de validación IDOR/BOLA
+> - SSO / autenticación centralizada con JWT
+> - Gateway middleware (Nginx)
+> - Generación de evidencia en carpeta `evidence/`
+>
+> **Acción requerida:** Usar `security-standards.md` como fuente autoritativa. El skill es un complemento genérico de apoyo, nunca el checklist de cumplimiento.
+
+---
+
+### Advertencia: `spring-boot-openapi-documentation` (Tier 4)
+
+> Este skill tiene solo 420 installs y proviene de un autor individual. Su contenido puede no estar actualizado con Spring Boot 3.6+.
+>
+> **Acción requerida:** Verificar el contenido del skill antes de cada uso crítico. No confiar en él para decisiones de arquitectura. Para OpenAPI, consultar también `ai-specs/specs/api-spec.yml` y la documentación oficial de SpringDoc 2.x.
+
+---
+
+### Nota: Skills sin cobertura (brechas permanentes)
+
+Las siguientes áreas no tienen skill disponible con calidad suficiente en el ecosistema público. El agente debe operar con su capacidad nativa usando los estándares del proyecto:
+
+| Área | Estándar de referencia |
+|---|---|
+| Flujo SDD completo (Fases 0-8, Gates) | `ai-specs/specs/flujo-desarrollo-standards.md` |
+| Definición de requerimientos PRD → artefactos | `ai-specs/specs/prd-requirements-standards.md` |
+| Java 21 / Spring Boot 3.5 + DDD | `ai-specs/specs/backend-standards.mdc` |
+| Flyway (`V{n}__description.sql` + PostgreSQL) | `ai-specs/specs/backend-standards.mdc` sección Migraciones |
+| Docker Compose / VPS Nginx deployment | `ai-specs/specs/deploy-standards.md` |
+| Testcontainers (integration tests) | `ai-specs/specs/backend-standards.mdc` sección Testing de integración |
+| Observabilidad / Spring Boot Actuator | `ai-specs/specs/backend-standards.mdc` sección Performance |
+| ADRs (Architecture Decision Records) | `ai-specs/specs/flujo-desarrollo-standards.md` Fase 3 + `docs/templates/ADR-template.md` |
+| UX Flows | `ai-specs/specs/flujo-desarrollo-standards.md` Fase 3 + `docs/templates/UX-Flow-template.md` |
+
+---
+
+## Historial de cambios de skills
+
+| Fecha | Acción | Skill | Motivo |
+|---|---|---|---|
+| 2026-03-23 | Desinstalado | `task-planning` (supercent-io/skills-template) | Repositorio fuente privado: no auditable ni actualizable |
+| 2026-03-23 | Migrado a proyecto | Todos los skills de scope global → `.agents/skills/` | Skills trackeados en `skills-lock.json`; ya no dependen de instalación global del usuario |

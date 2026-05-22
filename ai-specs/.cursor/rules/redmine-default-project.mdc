@@ -1,0 +1,29 @@
+---
+description: Proyecto Redmine por defecto para este workspace
+alwaysApply: true
+---
+
+## Proyecto Redmine predeterminado
+
+Para cualquier tarea relacionada con Redmine en este workspace (`c:/AI4Devs/ai-specs`), usar por defecto:
+
+- **Project identifier**: `ai-specs-sdd`
+- **Project ID**: `38`
+- **Project name**: `AI Specs SDD`
+
+## Regla de clasificación de tickets
+
+Para el proyecto `ai-specs-sdd` (`id: 38`), aplicar estas reglas de tipo:
+
+- Las historias de usuario deben registrarse como **Feature**.
+- Las tareas técnicas derivadas de una historia de usuario deben registrarse como **Task**.
+
+## Regla de operación
+
+- Si una solicitud no especifica proyecto de Redmine, asumir `ai-specs-sdd` (`id: 38`).
+- Si el usuario especifica otro proyecto explícitamente, priorizar la instrucción del usuario.
+
+## Regla de derivación
+
+- Si el ticket representa valor funcional de negocio (historia de usuario), usar tipo **Feature**.
+- Si el ticket representa trabajo técnico para implementar una historia (API, refactor, pruebas, infraestructura, migraciones, etc.), usar tipo **Task**.

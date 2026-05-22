@@ -1,0 +1,1199 @@
+openapi: "3.1.0"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Docker Registry v2 — OpenAPI Specification
+#
+# Cubre todas las rutas expuestas por el stack:
+#   • Rutas activas (/v2/*) enrutadas por nginx → registry:5000
+#   • Rutas bloqueadas (/metrics, /debug) devueltas con 403 por nginx
+#   • Endpoint interno de métricas Prometheus (puerto 5001, acceso directo)
+#
+# Especificación de referencia: Docker Distribution HTTP API V2
+#   https://distribution.github.io/distribution/spec/api/
+# ─────────────────────────────────────────────────────────────────────────────
+
+info:
+  title: Docker Private Registry API
+  version: "2.0"
+  description: |
+    API REST del registry Docker privado autoalojado.
+
+    **Autenticación:** HTTP Basic Auth con credenciales bcrypt (`auth/htpasswd`).
+    Todas las rutas bajo `/v2/` requieren credenciales válidas salvo indicación contraria.
+
+    **Transport:** HTTPS únicamente (TLS 1.2/1.3). El puerto 80 redirige a 443.
+
+    **Rate limiting** (por IP, gestionado por nginx):
+    - Push operations: 20 r/m (burst=10)
+    - Pull/blob downloads: 120 r/m (burst=60)
+    - Conexiones simultáneas máx.: 20 por IP
+
+    **Endpoints bloqueados externamente:**
+    - `GET /metrics` → 403 (servido en puerto 5001 interno)
+    - `GET /debug/*` → 403
+
+    **Cabecera de versión:** todas las respuestas de `/v2/*` incluyen
+    `Docker-Distribution-Api-Version: registry/2.0`.
+  contact:
+    name: Administración del Registry
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: https://10.0.1.61
+    description: Registry de producción (self-signed TLS)
+  - url: https://{domain}
+    description: Registry con dominio configurado
+    variables:
+      domain:
+        default: registry.example.com
+        description: FQDN o IP del registry (valor de REGISTRY_DOMAIN en .env)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Security
+# ─────────────────────────────────────────────────────────────────────────────
+security:
+  - basicAuth: []
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: |
+        Credenciales bcrypt administradas en `auth/htpasswd`.
+        Rotación: regenerar la línea con `htpasswd -Bbn <user> <pass>` y reiniciar el registry.
+
+  # ── Schemas reusables ──────────────────────────────────────────────────────
+  schemas:
+
+    ErrorResponse:
+      type: object
+      description: Respuesta de error estándar Docker Distribution API v2
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorEntry"
+      example:
+        errors:
+          - code: UNAUTHORIZED
+            message: "authentication required"
+            detail: null
+
+    ErrorEntry:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: Código de error Docker Distribution
+          enum:
+            - BLOB_UNKNOWN
+            - BLOB_UPLOAD_INVALID
+            - BLOB_UPLOAD_UNKNOWN
+            - DIGEST_INVALID
+            - MANIFEST_BLOB_UNKNOWN
+            - MANIFEST_INVALID
+            - MANIFEST_UNKNOWN
+            - NAME_INVALID
+            - NAME_UNKNOWN
+            - SIZE_INVALID
+            - UNAUTHORIZED
+            - DENIED
+            - UNSUPPORTED
+        message:
+          type: string
+        detail:
+          nullable: true
+
+    CatalogResponse:
+      type: object
+      required: [repositories]
+      properties:
+        repositories:
+          type: array
+          items:
+            type: string
+          description: Lista de nombres de repositorios almacenados
+          example: ["hello-world", "myapp", "backend/api"]
+
+    TagsListResponse:
+      type: object
+      required: [name, tags]
+      properties:
+        name:
+          type: string
+          description: Nombre del repositorio
+          example: myapp
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Lista de tags disponibles (null si el repositorio está vacío)
+          example: ["1.0", "1.1", "2.0", "latest"]
+
+    ManifestV2:
+      type: object
+      description: Docker Image Manifest v2 Schema 2
+      required: [schemaVersion, mediaType, config, layers]
+      properties:
+        schemaVersion:
+          type: integer
+          enum: [2]
+        mediaType:
+          type: string
+          enum:
+            - application/vnd.docker.distribution.manifest.v2+json
+            - application/vnd.oci.image.manifest.v1+json
+        config:
+          $ref: "#/components/schemas/Descriptor"
+        layers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Descriptor"
+
+    ManifestList:
+      type: object
+      description: Docker Manifest List (multi-arch) / OCI Image Index
+      required: [schemaVersion, mediaType, manifests]
+      properties:
+        schemaVersion:
+          type: integer
+          enum: [2]
+        mediaType:
+          type: string
+          enum:
+            - application/vnd.docker.distribution.manifest.list.v2+json
+            - application/vnd.oci.image.index.v1+json
+        manifests:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/Descriptor"
+              - type: object
+                properties:
+                  platform:
+                    type: object
+                    properties:
+                      architecture:
+                        type: string
+                        example: amd64
+                      os:
+                        type: string
+                        example: linux
+
+    Descriptor:
+      type: object
+      required: [mediaType, size, digest]
+      properties:
+        mediaType:
+          type: string
+          example: application/vnd.docker.image.rootfs.diff.tar.gzip
+        size:
+          type: integer
+          format: int64
+          example: 32654
+        digest:
+          type: string
+          pattern: "^sha256:[a-fA-F0-9]{64}$"
+          example: "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+
+    BlobUploadStatus:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nombre del repositorio al que pertenece la subida
+        uuid:
+          type: string
+          format: uuid
+          description: Identificador único de la sesión de upload
+        offset:
+          type: integer
+          format: int64
+          description: Bytes recibidos hasta ahora
+
+  # ── Parámetros reusables ───────────────────────────────────────────────────
+  parameters:
+    nameParam:
+      name: name
+      in: path
+      required: true
+      description: |
+        Nombre del repositorio. Puede ser un path con segmentos separados por `/`
+        (ej. `backend/api`, `team/project/image`).
+      schema:
+        type: string
+        pattern: "[a-z0-9]+(?:[._-][a-z0-9]+)*(?:/[a-z0-9]+(?:[._-][a-z0-9]+)*)*"
+        example: myapp
+
+    referenceParam:
+      name: reference
+      in: path
+      required: true
+      description: |
+        Tag (ej. `1.0`, `latest`) o digest (ej. `sha256:abc123...`).
+        Para operaciones DELETE se debe usar siempre el digest.
+      schema:
+        type: string
+        example: "1.0"
+
+    digestParam:
+      name: digest
+      in: path
+      required: true
+      description: Digest sha256 del blob (`sha256:<hex64>`).
+      schema:
+        type: string
+        pattern: "^sha256:[a-fA-F0-9]{64}$"
+        example: "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+
+    uuidParam:
+      name: uuid
+      in: path
+      required: true
+      description: UUID de la sesión de upload devuelto por POST /blobs/uploads/.
+      schema:
+        type: string
+        format: uuid
+
+    lastParam:
+      name: last
+      in: query
+      required: false
+      description: Paginación — devuelve resultados a partir de este valor (exclusive).
+      schema:
+        type: string
+
+    nParam:
+      name: n
+      in: query
+      required: false
+      description: Número máximo de resultados a devolver.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        example: 100
+
+  # ── Respuestas reusables ───────────────────────────────────────────────────
+  responses:
+    Unauthorized:
+      description: Autenticación requerida o credenciales inválidas
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+          example: 'Basic realm="Docker Registry"'
+        Docker-Distribution-Api-Version:
+          schema:
+            type: string
+            example: registry/2.0
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Forbidden:
+      description: El usuario autenticado no tiene permiso para esta operación
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            errors:
+              - code: DENIED
+                message: requested access to the resource is denied
+
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            errors:
+              - code: NAME_UNKNOWN
+                message: repository name not known to registry
+
+    TooManyRequests:
+      description: Rate limit excedido (nginx devuelve 429)
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Segundos hasta el próximo slot disponible
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Tags (agrupación lógica)
+# ─────────────────────────────────────────────────────────────────────────────
+tags:
+  - name: API Base
+    description: Verificación de versión y disponibilidad del registry
+  - name: Catálogo
+    description: Listado de repositorios e imágenes almacenados
+  - name: Tags
+    description: Gestión de tags por repositorio
+  - name: Manifiestos
+    description: Operaciones sobre manifiestos de imagen (push, pull, delete)
+  - name: Blobs
+    description: Descarga y eliminación de capas (blobs)
+  - name: Blob Uploads
+    description: Protocolo de subida de blobs en una o varias partes
+  - name: Interno (bloqueado)
+    description: |
+      Endpoints bloqueados por nginx con 403. Accesibles únicamente desde la red
+      interna Docker (`backend` network) en el puerto 5001 del contenedor registry-core.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Paths
+# ─────────────────────────────────────────────────────────────────────────────
+paths:
+
+  # ── API Base ────────────────────────────────────────────────────────────────
+
+  /v2/:
+    get:
+      tags: [API Base]
+      operationId: checkApiVersion
+      summary: Verificar versión de la API del registry
+      description: |
+        Endpoint obligatorio de Docker Distribution API v2. El healthcheck del
+        contenedor consulta este endpoint esperando HTTP 200 o 401.
+
+        - **200 OK** — registry en línea (sin autenticación configurada)
+        - **401 Unauthorized** — registry en línea con autenticación requerida ✓
+        - **404 Not Found** — no es un registry v2
+
+        nginx escucha en `/v2/` y aplica rate limiting de push (20 r/m, burst=10).
+      security:
+        - {}
+        - basicAuth: []
+      responses:
+        "200":
+          description: Registry v2 accesible y autenticado
+          headers:
+            Docker-Distribution-Api-Version:
+              schema:
+                type: string
+                example: registry/2.0
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  # ── Catálogo ────────────────────────────────────────────────────────────────
+
+  /v2/_catalog:
+    get:
+      tags: [Catálogo]
+      operationId: getCatalog
+      summary: Listar todos los repositorios almacenados
+      description: |
+        Devuelve la lista paginada de repositorios disponibles en el registry.
+        Requiere autenticación con credenciales válidas en `auth/htpasswd`.
+
+        **Paginación:** usar `n` (tamaño de página) y `last` (cursor).
+        El header `Link` de respuesta contiene la URL a la siguiente página cuando hay más resultados.
+      parameters:
+        - $ref: "#/components/parameters/nParam"
+        - $ref: "#/components/parameters/lastParam"
+      responses:
+        "200":
+          description: Catálogo devuelto correctamente
+          headers:
+            Link:
+              schema:
+                type: string
+              description: URL de la siguiente página (presente sólo si hay más resultados)
+              example: '</v2/_catalog?last=myapp&n=100>; rel="next"'
+            Docker-Distribution-Api-Version:
+              schema:
+                type: string
+                example: registry/2.0
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogResponse"
+              example:
+                repositories:
+                  - hello-world
+                  - backend/api
+                  - frontend/app
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  # ── Tags ────────────────────────────────────────────────────────────────────
+
+  /v2/{name}/tags/list:
+    get:
+      tags: [Tags]
+      operationId: listTags
+      summary: Listar tags de un repositorio
+      description: |
+        Devuelve todos los tags publicados para el repositorio especificado.
+        Soporta paginación mediante `n` y `last` con header `Link` en la respuesta.
+      parameters:
+        - $ref: "#/components/parameters/nameParam"
+        - $ref: "#/components/parameters/nParam"
+        - $ref: "#/components/parameters/lastParam"
+      responses:
+        "200":
+          description: Lista de tags devuelta correctamente
+          headers:
+            Link:
+              schema:
+                type: string
+              description: URL de la siguiente página (presente sólo si hay más resultados)
+            Docker-Distribution-Api-Version:
+              schema:
+                type: string
+                example: registry/2.0
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagsListResponse"
+              example:
+                name: myapp
+                tags:
+                  - "1.0"
+                  - "1.1"
+                  - "2.0"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  # ── Manifiestos ─────────────────────────────────────────────────────────────
+
+  /v2/{name}/manifests/{reference}:
+    parameters:
+      - $ref: "#/components/parameters/nameParam"
+      - $ref: "#/components/parameters/referenceParam"
+
+    head:
+      tags: [Manifiestos]
+      operationId: headManifest
+      summary: Verificar existencia de manifiesto y obtener digest
+      description: |
+        Comprueba si existe el manifiesto indicado por tag o digest sin descargar el cuerpo.
+        Devuelve el header `Docker-Content-Digest` con el sha256 del manifiesto.
+        Usar este endpoint antes de DELETE para obtener el digest requerido.
+      parameters:
+        - name: Accept
+          in: header
+          schema:
+            type: string
+            default: application/vnd.docker.distribution.manifest.v2+json
+          description: |
+            Media types aceptados (separados por coma):
+            - `application/vnd.docker.distribution.manifest.v2+json` (schema 2)
+            - `application/vnd.docker.distribution.manifest.list.v2+json` (multi-arch)
+            - `application/vnd.oci.image.manifest.v1+json` (OCI)
+            - `application/vnd.oci.image.index.v1+json` (OCI index)
+      responses:
+        "200":
+          description: Manifiesto existe — sólo headers, sin cuerpo
+          headers:
+            Docker-Content-Digest:
+              required: true
+              schema:
+                type: string
+                pattern: "^sha256:[a-fA-F0-9]{64}$"
+              example: "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+            Content-Length:
+              schema:
+                type: integer
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.docker.distribution.manifest.v2+json
+            Docker-Distribution-Api-Version:
+              schema:
+                type: string
+                example: registry/2.0
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    get:
+      tags: [Manifiestos]
+      operationId: getManifest
+      summary: Descargar manifiesto de imagen
+      description: |
+        Descarga el manifiesto asociado a un tag o digest.
+        Para `docker pull`, el cliente primero obtiene el manifiesto y luego descarga
+        los blobs de las capas. nginx aplica rate limit de pull (120 r/m, burst=60)
+        a las rutas de blobs; los manifiestos usan la zona `registry_push` (20 r/m).
+
+        Especificar el header `Accept` con el media type deseado para controlar
+        el formato devuelto (v2 schema 2 vs OCI).
+      parameters:
+        - name: Accept
+          in: header
+          schema:
+            type: string
+            default: application/vnd.docker.distribution.manifest.v2+json
+          description: Media types aceptados (ver HEAD para opciones completas)
+      responses:
+        "200":
+          description: Manifiesto devuelto correctamente
+          headers:
+            Docker-Content-Digest:
+              required: true
+              schema:
+                type: string
+                pattern: "^sha256:[a-fA-F0-9]{64}$"
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.docker.distribution.manifest.v2+json
+            Docker-Distribution-Api-Version:
+              schema:
+                type: string
+                example: registry/2.0
+          content:
+            application/vnd.docker.distribution.manifest.v2+json:
+              schema:
+                $ref: "#/components/schemas/ManifestV2"
+            application/vnd.docker.distribution.manifest.list.v2+json:
+              schema:
+                $ref: "#/components/schemas/ManifestList"
+            application/vnd.oci.image.manifest.v1+json:
+              schema:
+                $ref: "#/components/schemas/ManifestV2"
+            application/vnd.oci.image.index.v1+json:
+              schema:
+                $ref: "#/components/schemas/ManifestList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    put:
+      tags: [Manifiestos]
+      operationId: putManifest
+      summary: Publicar manifiesto (push de imagen)
+      description: |
+        Publica o actualiza el manifiesto de una imagen bajo el tag o digest indicado.
+        Este es el último paso de `docker push` — nginx aplica rate limit de push
+        (20 r/m burst=10) y permite bodies hasta 2 GB.
+
+        Los blobs referenciados en `config` y `layers` deben existir previamente
+        en el registry antes de publicar el manifiesto.
+      requestBody:
+        required: true
+        content:
+          application/vnd.docker.distribution.manifest.v2+json:
+            schema:
+              $ref: "#/components/schemas/ManifestV2"
+          application/vnd.docker.distribution.manifest.list.v2+json:
+            schema:
+              $ref: "#/components/schemas/ManifestList"
+          application/vnd.oci.image.manifest.v1+json:
+            schema:
+              $ref: "#/components/schemas/ManifestV2"
+          application/vnd.oci.image.index.v1+json:
+            schema:
+              $ref: "#/components/schemas/ManifestList"
+      responses:
+        "201":
+          description: Manifiesto publicado correctamente
+          headers:
+            Location:
+              required: true
+              schema:
+                type: string
+              description: URL canónica del manifiesto recién publicado
+              example: /v2/myapp/manifests/sha256:abc123...
+            Docker-Content-Digest:
+              required: true
+              schema:
+                type: string
+                pattern: "^sha256:[a-fA-F0-9]{64}$"
+            Docker-Distribution-Api-Version:
+              schema:
+                type: string
+                example: registry/2.0
+        "400":
+          description: Manifiesto inválido (digest incorrecto, blob referenciado no encontrado, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    delete:
+      tags: [Manifiestos]
+      operationId: deleteManifest
+      summary: Eliminar manifiesto (requiere storage.delete.enabled=true)
+      description: |
+        Elimina el manifiesto identificado por su digest. **Reference DEBE ser un digest**
+        (`sha256:<hex64>`), no un tag.
+
+        ⚠️ **Por defecto deshabilitado.** Para usar este endpoint:
+        1. Cambiar `storage.delete.enabled: true` en `config/registry/config.yml`
+        2. Reiniciar el registry: `docker compose restart registry`
+        3. Ejecutar el DELETE
+        4. Restaurar `storage.delete.enabled: false` y reiniciar
+        5. Ejecutar GC: `bash scripts/gc-registry.sh`
+
+        El blob sólo se libera de disco tras Garbage Collection.
+        HTTP 202 indica que la eliminación fue aceptada, no que el espacio fue liberado.
+      responses:
+        "202":
+          description: Manifiesto marcado para eliminación — ejecutar GC para liberar espacio
+          headers:
+            Docker-Distribution-Api-Version:
+              schema:
+                type: string
+                example: registry/2.0
+        "400":
+          description: Reference es un tag en lugar de un digest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "405":
+          description: Eliminación no habilitada (storage.delete.enabled=false)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - code: UNSUPPORTED
+                    message: The operation is unsupported.
+
+  # ── Blobs ────────────────────────────────────────────────────────────────────
+
+  /v2/{name}/blobs/{digest}:
+    parameters:
+      - $ref: "#/components/parameters/nameParam"
+      - $ref: "#/components/parameters/digestParam"
+
+    head:
+      tags: [Blobs]
+      operationId: headBlob
+      summary: Verificar existencia de blob (capa)
+      description: |
+        Comprueba si el blob existe sin descargarlo. Docker usa este endpoint
+        para evitar subir capas ya presentes en el registry (layer deduplication).
+      responses:
+        "200":
+          description: Blob existe — sólo headers
+          headers:
+            Content-Length:
+              required: true
+              schema:
+                type: integer
+                format: int64
+            Docker-Content-Digest:
+              required: true
+              schema:
+                type: string
+                pattern: "^sha256:[a-fA-F0-9]{64}$"
+            Docker-Distribution-Api-Version:
+              schema:
+                type: string
+                example: registry/2.0
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Blob no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      tags: [Blobs]
+      operationId: getBlob
+      summary: Descargar blob (capa de imagen)
+      description: |
+        Descarga el contenido de un blob (capa de imagen) identificado por su digest sha256.
+
+        nginx gestiona estas rutas con la zona `registry_pull` (120 r/m, burst=60)
+        para permitir paralelismo de capas en `docker pull`. El proxy opera en modo
+        streaming (`proxy_buffering off`) para soportar capas de múltiples GB.
+
+        Ruta nginx matcheada: `^/v2/[^/]+(?:/[^/]+)*/blobs/sha256:`
+      parameters:
+        - name: Range
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Rango de bytes para descarga parcial (ej. `bytes=0-1023`)
+      responses:
+        "200":
+          description: Blob completo
+          headers:
+            Content-Length:
+              required: true
+              schema:
+                type: integer
+                format: int64
+            Docker-Content-Digest:
+              required: true
+              schema:
+                type: string
+                pattern: "^sha256:[a-fA-F0-9]{64}$"
+            Content-Type:
+              schema:
+                type: string
+                example: application/octet-stream
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "206":
+          description: Contenido parcial (respuesta a Range request)
+          headers:
+            Content-Range:
+              schema:
+                type: string
+              example: "bytes 0-1023/5120"
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "307":
+          description: Redirect temporal (deshabilitado en este stack — `redirect.disable=true`)
+          headers:
+            Location:
+              schema:
+                type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Blob no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    delete:
+      tags: [Blobs]
+      operationId: deleteBlob
+      summary: Eliminar blob (requiere storage.delete.enabled=true)
+      description: |
+        Elimina un blob del almacenamiento. Operación de bajo nivel — en la práctica
+        se prefiere eliminar el manifiesto y ejecutar GC, que limpia los blobs huérfanos.
+        Requiere `storage.delete.enabled: true` en `config/registry/config.yml`.
+      responses:
+        "202":
+          description: Blob eliminado
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: Blob no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "405":
+          description: Eliminación no habilitada
+
+  # ── Blob Uploads ─────────────────────────────────────────────────────────────
+
+  /v2/{name}/blobs/uploads/:
+    post:
+      tags: [Blob Uploads]
+      operationId: initiateUpload
+      summary: Iniciar sesión de upload de blob
+      description: |
+        Inicia el protocolo de subida de un blob. Docker usa este endpoint
+        automáticamente durante `docker push`. Soporta dos modalidades:
+
+        **Chunked upload** (por defecto):
+        1. `POST /blobs/uploads/` → obtener UUID
+        2. `PATCH /blobs/uploads/{uuid}` → subir chunk(s)
+        3. `PUT /blobs/uploads/{uuid}?digest=sha256:...` → finalizar
+
+        **Monolithic upload** (cuerpo en POST):
+        Incluir el cuerpo completo del blob en el POST junto con `?digest=sha256:...`.
+
+        **Cross-repo mount** (optimización de capas compartidas):
+        Usar `?mount=sha256:...&from=repo` para montar un blob desde otro repositorio
+        sin re-subirlo (ahorro de ancho de banda).
+      parameters:
+        - name: digest
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: "^sha256:[a-fA-F0-9]{64}$"
+          description: |
+            Si se incluye, completa el upload monolítico en un único POST.
+        - name: mount
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: "^sha256:[a-fA-F0-9]{64}$"
+          description: Digest del blob a montar desde otro repositorio (cross-repo mount)
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Repositorio origen del cross-repo mount
+        - $ref: "#/components/parameters/nameParam"
+      requestBody:
+        required: false
+        description: Cuerpo del blob para upload monolítico (cuando se usa `?digest=`)
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "201":
+          description: Upload monolítico completado (cuando se proporcionó `?digest=`)
+          headers:
+            Location:
+              required: true
+              schema:
+                type: string
+              description: URL canónica del blob subido
+        "202":
+          description: Sesión de upload iniciada — continuar con PATCH/PUT
+          headers:
+            Location:
+              required: true
+              schema:
+                type: string
+              description: URL de la sesión de upload para PATCH/PUT subsiguientes
+              example: /v2/myapp/blobs/uploads/550e8400-e29b-41d4-a716-446655440000
+            Range:
+              schema:
+                type: string
+                example: "0-0"
+            Docker-Upload-UUID:
+              schema:
+                type: string
+                format: uuid
+            Docker-Distribution-Api-Version:
+              schema:
+                type: string
+                example: registry/2.0
+        "307":
+          description: Cross-repo mount redirigido a upload normal (blob no encontrado en repo origen)
+          headers:
+            Location:
+              schema:
+                type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /v2/{name}/blobs/uploads/{uuid}:
+    parameters:
+      - $ref: "#/components/parameters/nameParam"
+      - $ref: "#/components/parameters/uuidParam"
+
+    get:
+      tags: [Blob Uploads]
+      operationId: getUploadStatus
+      summary: Consultar estado de sesión de upload en curso
+      description: |
+        Devuelve el progreso actual de la sesión de upload identificada por UUID.
+        Útil para reanudar uploads interrumpidos — el header `Range` indica
+        cuántos bytes han sido recibidos.
+      responses:
+        "204":
+          description: Upload en progreso — estado devuelto en headers
+          headers:
+            Range:
+              required: true
+              schema:
+                type: string
+              description: Bytes recibidos hasta ahora (ej. `0-1048575`)
+              example: "0-1048575"
+            Docker-Upload-UUID:
+              schema:
+                type: string
+                format: uuid
+            Docker-Distribution-Api-Version:
+              schema:
+                type: string
+                example: registry/2.0
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Sesión de upload no encontrada o expirada
+
+    patch:
+      tags: [Blob Uploads]
+      operationId: uploadChunk
+      summary: Subir chunk de datos de blob
+      description: |
+        Sube un fragmento del blob durante un upload por chunks. Enviar chunks en orden,
+        con el header `Content-Range` indicando el rango de bytes.
+        Puede llamarse múltiples veces hasta completar el blob. Finalizar con PUT.
+
+        nginx permite bodies hasta 2 GB (`client_max_body_size 2G`) y timeouts extendidos
+        (900s) para soportar capas de imágenes grandes.
+      parameters:
+        - name: Content-Range
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            Rango de bytes de este chunk (ej. `0-1048575`).
+            Omitir para append al final del upload actual.
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "202":
+          description: Chunk aceptado
+          headers:
+            Range:
+              required: true
+              schema:
+                type: string
+              description: Total de bytes recibidos hasta ahora
+              example: "0-1048575"
+            Location:
+              required: true
+              schema:
+                type: string
+              description: URL de la sesión (usar en el siguiente PATCH o en el PUT final)
+            Docker-Upload-UUID:
+              schema:
+                type: string
+                format: uuid
+            Docker-Distribution-Api-Version:
+              schema:
+                type: string
+                example: registry/2.0
+        "400":
+          description: Rango de bytes inválido o chunk fuera de orden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Sesión de upload no encontrada o expirada
+        "416":
+          description: Rango solicitado no satisfacible
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    put:
+      tags: [Blob Uploads]
+      operationId: completeUpload
+      summary: Completar upload de blob
+      description: |
+        Finaliza la sesión de upload y asocia el blob al digest indicado.
+        El cuerpo puede estar vacío (si todos los datos se enviaron con PATCH)
+        o contener el último chunk del blob.
+
+        El registry verifica que el digest del cuerpo completo coincida con
+        el parámetro `digest`. Si no coincide, devuelve 400.
+      parameters:
+        - name: digest
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^sha256:[a-fA-F0-9]{64}$"
+          description: Digest sha256 esperado del blob completo
+      requestBody:
+        required: false
+        description: Último chunk del blob (puede estar vacío si ya se envió todo con PATCH)
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "201":
+          description: Blob almacenado correctamente
+          headers:
+            Location:
+              required: true
+              schema:
+                type: string
+              description: URL canónica del blob
+              example: /v2/myapp/blobs/sha256:abc123...
+            Docker-Content-Digest:
+              required: true
+              schema:
+                type: string
+                pattern: "^sha256:[a-fA-F0-9]{64}$"
+            Content-Range:
+              schema:
+                type: string
+              example: "0-1048575"
+            Docker-Distribution-Api-Version:
+              schema:
+                type: string
+                example: registry/2.0
+        "400":
+          description: Digest no coincide con el contenido subido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Sesión de upload no encontrada o expirada
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    delete:
+      tags: [Blob Uploads]
+      operationId: cancelUpload
+      summary: Cancelar sesión de upload en curso
+      description: |
+        Cancela y descarta la sesión de upload identificada por UUID,
+        liberando los recursos temporales asociados. Los uploads incompletos
+        abandonados son limpiados automáticamente por el mantenimiento periódico
+        del registry (`maintenance.uploadpurging.age: 168h`).
+      responses:
+        "204":
+          description: Sesión de upload cancelada y recursos liberados
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Sesión de upload no encontrada o ya completada/expirada
+
+  # ── Endpoints bloqueados externamente ────────────────────────────────────────
+
+  /metrics:
+    get:
+      tags: [Interno (bloqueado)]
+      operationId: getMetrics
+      summary: Métricas Prometheus del registry (bloqueado externamente)
+      description: |
+        **Acceso externo bloqueado por nginx con HTTP 403.**
+
+        Este endpoint es servido internamente por el debug server del registry
+        en el puerto `5001` del contenedor `registry-core`. Prometheus lo consume
+        desde la red Docker interna (`backend` network) sin pasar por nginx.
+
+        Métricas expuestas incluyen:
+        - `registry_storage_bytes_total` — bytes de almacenamiento utilizados
+        - Counters de peticiones HTTP por método, ruta y código de respuesta
+        - Latencia de operaciones de storage (MinIO)
+
+        **Acceso interno** (sólo desde la red Docker):
+        ```
+        http://registry-core:5001/metrics
+        ```
+      security: []
+      servers:
+        - url: http://registry-core:5001
+          description: Debug server interno (sólo red Docker backend)
+      responses:
+        "200":
+          description: Métricas en formato Prometheus text exposition
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: |
+                # HELP registry_storage_bytes_total Total storage used by registry
+                # TYPE registry_storage_bytes_total gauge
+                registry_storage_bytes_total 107374182400
+        "403":
+          description: Acceso bloqueado por nginx cuando se intenta desde la red externa
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "403 Forbidden"
+
+  /debug/{path}:
+    get:
+      tags: [Interno (bloqueado)]
+      operationId: getDebug
+      summary: Endpoints de debug del runtime Go (bloqueado externamente)
+      description: |
+        **Acceso externo bloqueado por nginx con HTTP 403.**
+
+        El registry expone endpoints de debug del runtime Go (`net/http/pprof`, `expvar`)
+        en el puerto `5001` del debug server. Permiten introspección del proceso:
+        goroutines, perfiles de CPU/memoria y variables exportadas.
+
+        Rutas comunes:
+        - `/debug/pprof/` — índice de perfiles pprof
+        - `/debug/pprof/goroutine` — dump de goroutines activas
+        - `/debug/pprof/heap` — perfil de heap
+        - `/debug/vars` — variables exportadas (expvar)
+
+        nginx bloquea cualquier ruta que empiece por `/debug` o `/metrics` con `deny all`.
+      security: []
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+          example: pprof/goroutine
+      responses:
+        "200":
+          description: Datos de debug (sólo accesible internamente)
+          content:
+            text/plain:
+              schema:
+                type: string
+        "403":
+          description: Acceso bloqueado por nginx
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "403 Forbidden"

@@ -1,0 +1,205 @@
+---
+description: Base de diseño y estilo gráfico para el ERP gubernamental. Define principios, paleta de color, tipografía, espaciado, patrones de componentes y tokens para Tailwind CSS, aplicables a todos los módulos.
+globs: ["frontend/**"]
+alwaysApply: false
+---
+
+# Design Base – ERP gubernamental
+
+Este documento define la **base estable de diseño y estilo gráfico** aplicable a múltiples módulos del ERP gubernamental. Es la fuente de verdad para colores, tipografía, espaciado y patrones de componentes. La implementación en código sigue [Frontend Standards](./frontend-standards.mdc); aquí solo se establecen reglas y tokens.
+
+---
+
+## 1. Principios de diseño
+
+- **Claridad**: La información debe ser fácil de leer y entender. Prioridad a legibilidad y a tareas administrativas sobre elementos decorativos.
+- **Consistencia**: Mismos patrones visuales e interacciones en todos los módulos (botones, formularios, tablas, navegación) para reducir carga cognitiva.
+- **Accesibilidad**: Cumplimiento mínimo WCAG 2.1 AA (contraste, focus visible, no depender solo del color). Diseño usable por personas con distintas capacidades.
+- **Tono institucional**: Apariencia seria, profesional y neutral; evitar estéticas lúdicas o comerciales.
+- **Neutralidad**: Colores y tipografía sobrios; el contenido es el protagonista, no la interfaz.
+- **Mantenibilidad**: Tokens centralizados (Tailwind theme) para que cambios de diseño se propaguen a todos los módulos sin tocar cada pantalla.
+
+---
+
+## 2. Paleta de color
+
+### 2.1 Primaria y secundaria
+
+- **Primaria**: Uso en acciones principales, enlaces, elementos activos y cabeceras. Debe cumplir contraste 4.5:1 sobre fondo claro.
+  - `primary-50` a `primary-950`: escala de claros a oscuros. El tono base recomendado para botón primario y links: `primary-600`. Fondo suave: `primary-50`.
+- **Secundaria**: Acciones secundarias, bordes sutiles, fondos alternativos. Complementaria a la primaria pero más neutra.
+  - `secondary-50` a `secondary-950`. Uso típico: botón secundario `secondary-100`/`secondary-200`, texto secundario `secondary-600`/`secondary-700`.
+
+Valores de ejemplo (alineados con Tailwind por defecto para azul/gris): primaria basada en azul institucional (`#2563eb` como base), secundaria en grises azulados.
+
+### 2.2 Semántica
+
+- **Éxito**: `success-500` (verde), fondos `success-50`; mensajes de confirmación, estados completados.
+- **Advertencia**: `warning-500` (ámbar), fondos `warning-50`; avisos no críticos.
+- **Error**: `error-500` (rojo), fondos `error-50`; validación, errores de envío, destructivo.
+- **Información**: `info-500` (azul), fondos `info-50`; mensajes informativos, hints.
+
+Todos deben cumplir contraste mínimo sobre fondo blanco o `neutral-50` según WCAG 2.1 AA.
+
+### 2.3 Neutros
+
+- **Fondos**: `neutral-50` (fondo de página), `neutral-100` (bloques/cards), `white` (contenido principal).
+- **Bordes**: `neutral-200`, `neutral-300` para divisores y contornos.
+- **Texto**: `neutral-900` (primario), `neutral-600` (secundario), `neutral-400` o `neutral-500` (deshabilitado, placeholder).
+
+### 2.4 Reglas de uso
+
+- **Contraste**: Texto sobre fondo debe cumplir al menos 4.5:1 (texto normal) y 3:1 (texto grande). Fondos de botones primarios: texto claro sobre `primary-600` o más oscuro.
+- **Color no único**: No usar solo color para transmitir información (ej. estado activo/inactivo). Combinar con icono, texto o patrón.
+
+---
+
+## 3. Tipografía
+
+### 3.1 Familias
+
+- **Principal**: Sans-serif legible y neutra. Recomendación: fuentes del sistema o web-safe (ej. `ui-sans-serif, system-ui, sans-serif`) o variable font (ej. Inter, Source Sans 3) cargada vía fuentes web.
+- **Monospace** (solo para código o datos alfanuméricos fijos): `ui-monospace, monospace` o fuente específica (ej. JetBrains Mono).
+
+### 3.2 Escala
+
+| Uso | Tamaño (rem) | Line-height | Token / clase sugerida |
+|-----|--------------|-------------|-------------------------|
+| Display | 2.25–2.5rem | 1.2 | `text-display` |
+| H1 | 1.875rem | 1.3 | `text-h1` |
+| H2 | 1.5rem | 1.3 | `text-h2` |
+| H3 | 1.25rem | 1.4 | `text-h3` |
+| Body | 1rem | 1.5 | `text-body` |
+| Small | 0.875rem | 1.5 | `text-sm` |
+| Caption / label | 0.75rem | 1.4 | `text-caption` |
+| Code | 0.875rem | 1.5 | `text-sm font-mono` |
+
+### 3.3 Uso recomendado
+
+- **Títulos de página**: H1.
+- **Secciones**: H2, H3.
+- **Cuerpo de texto, formularios, tablas**: Body o Small.
+- **Etiquetas de campo, metadatos**: Caption o Small.
+- **Código, IDs, referencias**: Monospace con `text-sm` o `text-body`.
+
+---
+
+## 4. Espaciado y layout
+
+### 4.1 Escala de espaciado
+
+Alinear con la escala por defecto de Tailwind (múltiplos de 0.25rem): `1` (0.25rem) a `96` (24rem). Uso típico:
+
+- **Entre elementos dentro de un componente**: `2`, `3`, `4` (0.5rem–1rem).
+- **Entre bloques (p. ej. secciones)**: `6`, `8` (1.5rem–2rem).
+- **Padding de cards o contenedores**: `4`, `5`, `6`.
+- **Margin de página/contenedor principal**: `4`, `6`, `8` según breakpoint.
+
+### 4.2 Grid
+
+- **Columnas**: 12 columnas en escritorio; en móvil contenido a ancho completo o columnas reducidas según diseño.
+- **Gutter**: equivalente a `4` o `6` (1rem–1.5rem).
+- **Breakpoints**: seguir convención Tailwind por defecto (`sm`, `md`, `lg`, `xl`, `2xl`) o definir en theme con los mismos nombres para consistencia.
+
+### 4.3 Convenciones
+
+- **Margin entre secciones**: `space-block` equivalente a `6` o `8`.
+- **Padding interno de cards/paneles**: `p-4` o `p-6`.
+- **Separación entre label y campo**: `1` o `2`; entre campo y siguiente grupo: `4`.
+
+---
+
+## 5. Componentes base (patrones y tokens)
+
+Solo reglas y nombres de tokens; la implementación con Tailwind y React sigue [Frontend Standards](./frontend-standards.mdc).
+
+### 5.1 Botones
+
+- **Primario**: fondo `primary-600`, texto claro, hover `primary-700`, focus anillo visible (`ring-2 ring-primary-500` o equivalente). Estados: disabled opacidad reducida y cursor not-allowed.
+- **Secundario**: fondo `secondary-100` o borde `secondary-300`, texto `secondary-700`/`neutral-800`; hover más oscuro.
+- **Terciario**: estilo link o botón fantasma (sin fondo o fondo transparente), texto `primary-600`.
+- **Peligro**: fondo `error-600`, texto claro; solo para acciones destructivas (eliminar, etc.).
+
+Tokens sugeridos: `btn-primary`, `btn-secondary`, `btn-tertiary`, `btn-danger`. Tamaño mínimo de área de click: 44x44px en touch.
+
+### 5.2 Campos de formulario
+
+- **Altura**: mínima equivalente a `10` (2.5rem) para inputs de una línea.
+- **Bordes**: `border border-neutral-300`, `rounded-md` (o `rounded-lg` según sistema).
+- **Focus**: anillo visible (`ring-2 ring-primary-500`, `border-primary-500`).
+- **Error**: borde `error-500`, texto de error `error-600` o `error-700`, fondo opcional `error-50`.
+- **Label**: `text-sm` o `text-caption`, color `neutral-700`; asociado con el campo (for/id o aria).
+
+### 5.3 Tablas
+
+- **Cabeceras**: fondo `neutral-100` o `neutral-50`, texto `neutral-700` o `neutral-900`, `font-medium`, padding `3` o `4`.
+- **Filas**: borde inferior `neutral-200`; alternancia opcional con `neutral-50`.
+- **Densidad**: padding vertical al menos `2` o `3` para legibilidad y touch.
+
+### 5.4 Navegación
+
+- **Menú principal**: items con estado activo (fondo `primary-50` o `primary-100`, texto `primary-700`); hover visible.
+- **Breadcrumbs**: separador neutro; enlace actual sin link, texto `neutral-500` o `neutral-600`.
+- **Tabs**: indicador activo (borde inferior o fondo) con color primario; mismo criterio de contraste y focus.
+
+---
+
+## 6. Accesibilidad
+
+- **Contraste**: Todos los pares texto/fondo deben cumplir WCAG 2.1 AA (4.5:1 normal, 3:1 grande). Revisar primaria, secundaria y semánticos sobre fondos claros.
+- **Focus visible**: Todo elemento interactivo debe mostrar anillo o borde visible en focus (no `outline: none` sin alternativa).
+- **Tamaños mínimos**: Área de click/touch al menos 44x44px para botones y controles interactivos.
+- **No solo color**: Estados (éxito, error, activo) deben indicarse además con icono, texto o patrón.
+- **Texto**: Tamaño base mínimo 1rem (16px) para cuerpo; captions no inferiores a 0.75rem con contraste suficiente.
+
+---
+
+## 7. Integración con Tailwind
+
+### 7.1 Ubicación de tokens
+
+- **Colores, fuentes, espaciado**: Definir en `tailwind.config.js` (o en el archivo de tema que use el proyecto) en `theme.extend` o `theme` para no depender de valores por defecto dispersos.
+- **Nombres semánticos**: Mapear `primary`, `secondary`, `neutral`, `success`, `warning`, `error`, `info` en `theme.colors` para usar `bg-primary-600`, `text-neutral-700`, etc.
+
+### 7.2 Convención de nombres
+
+- Colores: `primary-50` … `primary-950`, `secondary-*`, `neutral-*`, `success-*`, `warning-*`, `error-*`, `info-*`.
+- Tipografía: usar clases de Tailwind extendidas si se definen (ej. `text-body`, `text-h1`) o `text-base`, `text-lg`, `text-sm`, `font-medium`, `font-mono` según la escala de este documento.
+- Espaciado: preferir escalas del theme (p. ej. `p-4`, `gap-6`, `space-y-4`) en lugar de valores arbitrarios para mantener consistencia.
+
+### 7.3 Ejemplo de uso en componentes
+
+Todos los módulos deben usar estas clases/tokens en lugar de colores o tamaños arbitrarios:
+
+```tsx
+// Botón primario
+<button
+  type="button"
+  className="px-4 py-2 rounded-md font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  Guardar
+</button>
+
+// Card con borde y espaciado estándar
+<div className="p-6 rounded-lg border border-neutral-200 bg-white shadow-sm">
+  <h2 className="text-h2 text-neutral-900 mb-4">Título de sección</h2>
+  <p className="text-body text-neutral-600">Contenido usando tokens de diseño.</p>
+</div>
+
+// Campo de formulario con error
+<div>
+  <label htmlFor="name" className="block text-sm font-medium text-neutral-700 mb-1">
+    Nombre
+  </label>
+  <input
+    id="name"
+    type="text"
+    className="w-full px-3 py-2 border rounded-md text-sm border-error-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+    aria-invalid="true"
+    aria-describedby="name-error"
+  />
+  <p id="name-error" className="mt-1 text-sm text-error-600">El nombre es obligatorio.</p>
+</div>
+```
+
+Los valores concretos de `primary-*`, `neutral-*`, `error-*` y las clases de tipografía (`text-h2`, `text-body`) deben estar definidos en el theme de Tailwind del proyecto para que todos los módulos compartan la misma base gráfica.

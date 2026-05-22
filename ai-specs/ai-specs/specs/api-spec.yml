@@ -1,0 +1,211 @@
+openapi: 3.0.3
+info:
+  title: Talent Tracking API
+  description: API REST para el sistema de seguimiento de talento (posiciones, candidatos, aplicaciones).
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3010
+    description: Servidor de desarrollo
+
+paths:
+  /positions/{id}:
+    put:
+      summary: Actualizar una posición
+      description: Permite actualizar los datos de una posición existente. Soporta actualización parcial; solo se modifican los campos enviados en el cuerpo.
+      operationId: updatePosition
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico de la posición
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PositionUpdate'
+      responses:
+        '200':
+          description: Posición actualizada correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Position updated successfully
+                  data:
+                    $ref: '#/components/schemas/Position'
+        '400':
+          description: Error de validación o datos de referencia inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validation:
+                  value:
+                    message: Validation error
+                    error: Detalle del error de validación
+                invalidReference:
+                  value:
+                    message: Invalid reference data
+                    error: companyId o interviewFlowId no encontrado
+                invalidId:
+                  value:
+                    message: Invalid position ID format
+                    error: El ID debe ser un número válido
+                noData:
+                  value:
+                    message: No data provided for update
+                    error: El cuerpo de la petición no puede estar vacío
+        '404':
+          description: Posición no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: Position not found
+                error: Position not found
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: Error updating position
+                error: Detalle del error
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        error:
+          type: string
+
+    PositionUpdate:
+      type: object
+      description: Campos editables para actualización de posición (todos opcionales; validación según reglas cuando se envían)
+      properties:
+        title:
+          type: string
+          maxLength: 100
+          description: Título del puesto
+        description:
+          type: string
+          description: Descripción breve de la posición
+        location:
+          type: string
+          description: Ubicación del puesto
+        jobDescription:
+          type: string
+          description: Descripción detallada del puesto
+        status:
+          type: string
+          enum: [Open, Contratado, Cerrado, Borrador]
+          description: Estado (default Borrador)
+        isVisible:
+          type: boolean
+          default: false
+          description: Visibilidad pública
+        requirements:
+          type: string
+          nullable: true
+        responsibilities:
+          type: string
+          nullable: true
+        salaryMin:
+          type: number
+          minimum: 0
+          nullable: true
+        salaryMax:
+          type: number
+          minimum: 0
+          nullable: true
+        employmentType:
+          type: string
+          nullable: true
+        benefits:
+          type: string
+          nullable: true
+        companyDescription:
+          type: string
+          nullable: true
+        applicationDeadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Debe ser fecha futura
+        contactInfo:
+          type: string
+          nullable: true
+        companyId:
+          type: integer
+          minimum: 1
+          nullable: true
+        interviewFlowId:
+          type: integer
+          minimum: 1
+          nullable: true
+
+    Position:
+      type: object
+      description: Posición tal como se devuelve tras crear/actualizar/consultar
+      properties:
+        id:
+          type: integer
+        companyId:
+          type: integer
+        interviewFlowId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [Open, Contratado, Cerrado, Borrador]
+        isVisible:
+          type: boolean
+        location:
+          type: string
+        jobDescription:
+          type: string
+        requirements:
+          type: string
+          nullable: true
+        responsibilities:
+          type: string
+          nullable: true
+        salaryMin:
+          type: number
+          nullable: true
+        salaryMax:
+          type: number
+          nullable: true
+        employmentType:
+          type: string
+          nullable: true
+        benefits:
+          type: string
+          nullable: true
+        companyDescription:
+          type: string
+          nullable: true
+        applicationDeadline:
+          type: string
+          format: date-time
+          nullable: true
+        contactInfo:
+          type: string
+          nullable: true

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Plantilla versionable para OpenCode + MCP.
+  // Copia este archivo a .opencode/opencode.jsonc y configura tus variables de entorno locales.
+  "autoupdate": "notify",
+  "share": "manual",
+  "default_agent": "build",
+
+  "permission": {
+    "bash": "ask",
+    "edit": "ask"
+  },
+
+  "compaction": {
+    "auto": true,
+    "prune": true
+  },
+
+  "watcher": {
+    "ignore": [
+      "**/.git/**",
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/target/**"
+    ]
+  },
+
+  "instructions": [
+    "AGENTS.md",
+    ".github/copilot-instructions.md"
+  ],
+
+  // Variables requeridas en entorno local:
+  // REDMINE_MCP_API_KEY
+  // REDMINE_API_KEY
+  // STITCH_API_KEY
+  "mcp": {
+    "redmine-manager": {
+      "type": "remote",
+      "url": "http://10.0.1.61:3002/mcp",
+      "oauth": false,
+      "timeout": 10000,
+      "headers": {
+        "X-API-Key": "{env:REDMINE_MCP_API_KEY}",
+        "X-Redmine-API-Key": "{env:REDMINE_API_KEY}"
+      },
+      "enabled": true
+    },
+    "stitch": {
+      "type": "remote",
+      "url": "https://stitch.googleapis.com/mcp",
+      "oauth": false,
+      "timeout": 10000,
+      "headers": {
+        "X-Goog-Api-Key": "{env:STITCH_API_KEY}"
+      },
+      "enabled": false
+    }
+  }
+}

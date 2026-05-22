@@ -1,0 +1,61 @@
+services:
+  redmine-mcp-server:
+    image: redmine-mcp-server:0.12.1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: redmine-mcp-server
+    expose:
+      - "8000"
+    env_file:
+      - .env.docker
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - redmine-mcp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  mcp-auth:
+    image: mcp-auth:0.12.1
+    build:
+      context: ./proxy
+      dockerfile: Dockerfile.auth
+    container_name: mcp-auth
+    expose:
+      - "9090"
+    environment:
+      - VALIDATOR_PORT=9090
+    env_file:
+      - .env.docker
+    restart: unless-stopped
+    networks:
+      - redmine-mcp-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: mcp-nginx
+    ports:
+      - "3002:8080"
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - redmine-mcp-server
+      - mcp-auth
+    restart: unless-stopped
+    networks:
+      - redmine-mcp-network
+
+networks:
+  redmine-mcp-network:
+    driver: bridge
+
+volumes:
+  redmine-mcp-logs:
+  redmine-mcp-data:

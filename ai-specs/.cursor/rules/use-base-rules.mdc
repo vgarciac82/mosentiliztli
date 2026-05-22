@@ -1,0 +1,44 @@
+---
+description: Indica a todos los agentes de IA que usen las reglas consolidadas en base-standards.mdc
+globs: 
+alwaysApply: true
+---
+
+# Usar las reglas base de desarrollo
+
+Todos los agentes de IA que trabajen en este proyecto deben seguir las reglas y guías de desarrollo definidas en:
+
+**📋 [ai-specs/specs/base-standards.mdc]**
+
+## Directriz principal
+
+- **Fuente única de verdad para desarrollo**: Todas las reglas de código, estándares de testing y arquitectura se mantienen en `base-standards.mdc`. No duplicar esas reglas en otros archivos.
+- **Reglas operativas complementarias**: Las reglas `.cursor/rules/sdd-skills-map.mdc` y `.cursor/rules/redmine-default-project.mdc` son **obligatorias y complementarias**: añaden contexto operativo (selección de skills, proyecto Redmine por defecto) que no está en `base-standards.mdc` y no se contradice con él.
+- **Siempre actualizado**: `base-standards.mdc` es el estándar de desarrollo activo; las reglas complementarias tienen su propio ciclo de mantenimiento.
+
+## Qué incluye base-standards.mdc
+
+- **Principios fundamentales**: Tareas pequeñas una a la vez, Test-Driven Development (TDD), type safety, nombres claros, cambios incrementales
+- **Estándares de idioma**: Solo inglés para artefactos técnicos y solo español para artefactos de documentación
+- **Estándares específicos**: Enlaces a estándares detallados de:
+  - Backend (API, patrones de base de datos, testing, security)
+  - Frontend (componentes React, guías UI/UX)
+  - Documentation (estructura, formato, mantenimiento)
+
+## Flujo SDD — artefactos normativos complementarios
+
+Para el ciclo de vida completo de desarrollo (Discovery → PRD → tickets → implementación → PR), los agentes deben leer también:
+
+- **`ai-specs/specs/flujo-desarrollo-standards.md`** — Fases 0-8, gates de calidad, convenciones de branches, comandos y anti-patrones del flujo SDD operativo.
+- **`ai-specs/specs/prd-requirements-standards.md`** — Estándar fuente de los Gates PRD y Gate-final, tabla de decisión de artefactos (UX Flows, ADRs, US refinadas) y quality gates de requerimientos.
+
+## Cumplimiento
+
+Antes de iniciar cualquier trabajo de desarrollo, los agentes deben:
+1. Leer y entender todas las reglas en `base-standards.mdc`
+2. Seguir el proceso TDD y los principios definidos allí
+3. Usar las herramientas, frameworks de testing y estándares indicados
+4. Mantener la calidad de código y estándares de type safety requeridos
+5. Consultar los documentos de estándares específicos (backend, frontend, documentation) para guías detalladas
+
+**Recuerda**: `base-standards.mdc` es el manual completo de reglas de desarrollo del proyecto.

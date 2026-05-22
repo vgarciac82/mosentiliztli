@@ -1,0 +1,121 @@
+---
+description: Este documento contiene todas las reglas y guías de desarrollo del proyecto, aplicables a todos los agentes de IA (Claude, Cursor, Codex, Gemini, etc.).
+alwaysApply: true
+---
+
+## 1. Principios fundamentales
+- **Tareas pequeñas, una a la vez**: Trabajar siempre en pasos muy pequeños, uno cada vez. No avanzar más de un paso.
+- **Test-Driven Development (TDD)**: Empezar con tests que fallen para cualquier funcionalidad nueva, según el detalle de la tarea.
+- **Type Safety**: Todo el código debe estar completamente tipado.
+- **Nombres claros**: Usar nombres claros y descriptivos para variables y funciones.
+- **Cambios incrementales**: Preferir cambios incrementales y acotados frente a modificaciones grandes y complejas.
+- **Cuestionar suposiciones**: Cuestionar siempre las suposiciones e inferencias.
+- **Detección de patrones**: Detectar y resaltar patrones de código repetidos.
+
+## 2. Estándares de idioma
+- **Solo inglés en artefactos técnicos**: Código, nombres técnicos, frameworks y términos de dominio se mantienen en inglés, incluyendo:
+    - Código (variables, funciones, clases, comentarios, mensajes de log)
+    - API docs
+    - Esquemas de datos y nombres de base de datos
+    - Archivos de configuración y scripts
+    - Nombres y descripciones de tests
+- **Texto narrativo en español**: Las reglas, especificaciones, documentación y mensajes al usuario se redactan en español, incluyendo:
+    - Mensajes de error mostrados al usuario
+    - README
+    - Guías
+    - Tickets de RedMine (títulos, descripciones, comentarios)
+    - Mensajes de commit en Git
+
+## 3. Gestión de tickets Redmine
+
+### Política global de tipo de ticket
+
+- **Historias de usuario**: Registrar como tipo **Feature**.
+- **Trabajo técnico derivado** de una historia de usuario: Registrar como tipo **Task**.
+
+### Criterio mínimo de derivación
+
+- Si el ticket representa **valor funcional de negocio**, usar **Feature**.
+- Si el ticket representa **implementación técnica** para habilitar una **Feature**, usar **Task**.
+
+### Ejemplos rápidos
+
+- **Ejemplo Feature**: "Como usuario de nómina, quiero ejecutar el cálculo de un proceso para un periodo para obtener montos por empleado".
+- **Ejemplo Task**: "Implementar endpoint `POST /api/periodos/{id}/procesos/{id}/ejecuciones` con pruebas de integración".
+
+### Consistencia de reglas
+
+- `base-standards.mdc` define la regla transversal para todos los agentes y proyectos.
+- Las reglas locales por workspace/proyecto (por ejemplo `.cursor/rules/redmine-default-project.mdc`) detallan el contexto operativo sin contradecir esta política.
+
+## 4. Estándares específicos
+
+Para estándares y guías detalladas por área del proyecto, consultar:
+
+- [Backend Standards](./backend-standards.mdc) - API development, database patterns, testing, security y buenas prácticas de backend
+- [Frontend Standards](./frontend-standards.mdc) - Componentes React, guías UI/UX y arquitectura frontend
+- [Design Base](./design-base.mdc) - Base de diseño y estilo gráfico (colores, tipografía, espaciado, componentes) aplicable a todos los módulos del ERP
+- [Documentation Standards](./documentation-standards.mdc) - Estructura, formato y mantenimiento de la documentación técnica, incluyendo estándares para IA como este documento
+- [Security Standards](./security-standards.md) - IDOR, SSO, gateway middleware y cumplimiento del checklist IDOR; la evidencia de cumplimiento (informes, diagramas, resultados de pruebas) debe almacenarse en la carpeta `evidence/` en la raíz del proyecto
+
+## 5. Infraestructura / Despliegue (VPS)
+
+### Gateway único en host
+**Regla:** El host expone servicios HTTP/HTTPS únicamente a través de **Nginx** como gateway único.
+
+**Objetivo:** Centralizar seguridad, routing, certificados y observabilidad.
+
+---
+
+### Contenedores sin exposición pública
+**Regla:** Las aplicaciones corren en Docker y exponen puertos solo en loopback.
+
+
+NUNCA usar:
+
+- `0.0.0.0:<puerto>`
+- Exposición directa a Internet
+
+Ejemplo:
+
+- `"127.0.0.1:3000:3000"`
+
+**Objetivo:** Reducir superficie de ataque y evitar bypass del gateway.
+
+---
+
+### Convención “1 subdominio = 1 app = 1 carpeta”
+**Regla:** Cada servicio vive en su carpeta dedicada bajo `/opt/`.
+
+Estructura actual:
+
+/opt/
+  redmine/
+    docker-compose.yml
+    data/
+    config/
+
+  docflow/
+    docker-compose.yml
+    data/
+    config/
+
+  orgchart/
+    docker-compose.yml
+    data/
+    config/
+
+  shared/
+
+**Objetivo:** Escalabilidad horizontal y aislamiento por servicio.
+
+---
+
+### Operación uniforme
+**Regla:**
+
+- container_name único por app
+- restart policy: `unless-stopped`
+- Logs Nginx por subdominio
+
+**Objetivo:** Trazabilidad y troubleshooting eficiente.
