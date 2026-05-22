@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:mosentiliztli}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: 8080
+
+event:
+  capacity:
+    total-limit: ${EVENT_CAPACITY_LIMIT:250}
+  rsvp:
+    expiration-days: ${EVENT_RSVP_EXPIRATION_DAYS:35}
+
+twilio:
+  webhook:
+    url: ${TWILIO_WEBHOOK_URL:http://localhost:8080/api/v1/webhooks/twilio}
