@@ -16,6 +16,15 @@ public class EventConfig {
     @Column(name = "total_capacity")
     private Integer totalCapacity;
 
+    @Column(name = "twilio_account_sid")
+    private String twilioAccountSid;
+
+    @Column(name = "twilio_auth_token")
+    private String twilioAuthToken;
+
+    @Column(name = "twilio_phone_number")
+    private String twilioPhoneNumber;
+
     public EventConfig() {}
     public EventConfig(Long id, LocalDateTime expirationDate, Integer totalCapacity) {
         this.id = id; this.expirationDate = expirationDate; this.totalCapacity = totalCapacity;
@@ -26,4 +35,10 @@ public class EventConfig {
     public void setExpirationDate(LocalDateTime expirationDate) { this.expirationDate = expirationDate; }
     public Integer getTotalCapacity() { return totalCapacity; }
     public void setTotalCapacity(Integer totalCapacity) { this.totalCapacity = totalCapacity; }
+    public String getTwilioAccountSid() { return twilioAccountSid; }
+    public void setTwilioAccountSid(String twilioAccountSid) { this.twilioAccountSid = twilioAccountSid; }
+    public String getTwilioAuthToken() { return twilioAuthToken; }
+    public void setTwilioAuthToken(String twilioAuthToken) { this.twilioAuthToken = twilioAuthToken; }
+    public String getTwilioPhoneNumber() { return twilioPhoneNumber; }
+    public void setTwilioPhoneNumber(String twilioPhoneNumber) { this.twilioPhoneNumber = twilioPhoneNumber; }
 }
