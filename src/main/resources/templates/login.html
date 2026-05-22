@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout/base}">
+
+<head>
+    <title>Acceso Invitados - Boda Jenny & Vicente</title>
+</head>
+
+<body>
+    <div layout:fragment="content" class="min-h-screen flex flex-col items-center justify-center text-center px-6">
+        <div class="fixed inset-0 z-0 hero-bg opacity-30"></div>
+        <div class="absolute inset-0 overlay-silk z-0"></div>
+
+        <div class="relative z-10 w-full max-w-sm bg-white/70 backdrop-blur-xl rounded-3xl border border-[var(--dorado-suave)]/20 p-8 space-y-8 shadow-xl">
+            <div class="space-y-4">
+                <h1 class="font-names text-5xl md:text-6xl text-[var(--vino-acento)]">Bienvenidos</h1>
+                <p class="font-sans text-xs tracking-[0.2em] uppercase text-[var(--dorado-suave)]">Validación de Invitado</p>
+            </div>
+
+            <div th:if="${error}" class="bg-red-50 text-red-800 text-xs py-3 px-4 rounded-lg font-sans border border-red-100">
+                <p th:text="${error}">Código no válido</p>
+            </div>
+
+            <form th:action="@{/invitacion}" method="post" class="space-y-6">
+                <div>
+                    <input type="text" name="codigoInvitacion" placeholder="Ingresa tu código" required
+                        class="w-full bg-transparent border-b border-[var(--dorado-suave)]/50 py-3 text-center text-lg font-serif focus:outline-none focus:border-[var(--vino-acento)] transition-colors placeholder-gray-400">
+                </div>
+                
+                <button type="submit"
+                    class="w-full btn-gold bg-[var(--vino-acento)] text-white border-transparent hover:bg-[var(--texto-oscuro)] py-4 rounded-full font-sans text-[10px] uppercase tracking-[0.3em] transition-colors shadow-md">
+                    Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

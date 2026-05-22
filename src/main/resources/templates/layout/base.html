@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boda Jenny & Vicente - 31.10.2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,500;1,300&family=Montserrat:wght@200;300;400&family=Great+Vibes&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --marfil-seda: #FDFBF7;
+            --vino-acento: #7A1F3D;
+            --dorado-suave: #D7B46A;
+            --rosa-empolvado: #E5D1D1;
+            --texto-oscuro: #2D2A26;
+        }
+
+        .font-serif {
+            font-family: 'Cormorant Garamond', serif;
+        }
+
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .font-names {
+            font-family: 'Great Vibes', cursive;
+        }
+
+        .font-sans {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background-color: var(--marfil-seda);
+            color: var(--texto-oscuro);
+            overflow-x: hidden;
+        }
+
+        /* Capa para la imagen de las manos en la portada */
+        .hero-bg {
+            background-image: url('/images/main_background.png');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .overlay-silk {
+            background: linear-gradient(to bottom, rgba(253, 251, 247, 0.4) 0%, rgba(253, 251, 247, 0.9) 100%);
+        }
+
+        .btn-gold {
+            border: 1px solid var(--dorado-suave);
+            color: var(--texto-oscuro);
+            transition: all 0.4s ease;
+        }
+
+        .btn-gold:hover {
+            background-color: var(--dorado-suave);
+            color: white;
+        }
+
+        .countdown-box {
+            border-bottom: 1px solid rgba(215, 180, 106, 0.3);
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased">
+    <nav id="navbar" class="fixed top-0 inset-x-0 z-40 hidden opacity-0 transition-all duration-700 pt-6 px-4">
+        <div
+            class="max-w-xl mx-auto bg-white/70 backdrop-blur-md border border-[var(--dorado-suave)]/20 rounded-full px-6 py-3 flex justify-around text-[9px] md:text-[11px] tracking-[0.2em] uppercase font-sans text-[var(--texto-oscuro)] shadow-sm">
+            <a href="#inicio" class="hover:text-[var(--vino-acento)] transition-colors">Inicio</a>
+            <a href="#lugar" class="hover:text-[var(--vino-acento)] transition-colors">Lugar</a>
+            <a href="#itinerario" class="hover:text-[var(--vino-acento)] transition-colors">Itinerario</a>
+            <a href="#rsvp" class="text-[var(--vino-acento)] font-bold">RSVP</a>
+            <a href="#regalos" class="hover:text-[var(--vino-acento)] transition-colors">Regalos</a>
+        </div>
+    </nav>
+
+    <div layout:fragment="content">
+        <!-- Content gets injected here -->
+    </div>
+
+    <!-- Scripts comunes (Ej. animaciones de particulas) -->
+    <script th:src="@{/js/main.js}"></script>
+    <th:block layout:fragment="page-scripts"></th:block>
+</body>
+
+</html>
