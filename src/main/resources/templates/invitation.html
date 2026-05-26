@@ -82,24 +82,45 @@
             </section>
 
             <!-- LUGAR -->
-            <section id="lugar" class="py-24 text-center space-y-12 border-y border-[var(--dorado-suave)]/10">
+            <section id="lugar" class="py-24 text-center space-y-16 border-y border-[var(--dorado-suave)]/10">
                 <div class="space-y-2">
                     <p class="font-serif text-3xl text-[var(--texto-oscuro)]">Sábado 31 de Octubre</p>
                     <p class="font-sans text-xs tracking-[0.3em] uppercase text-[var(--dorado-suave)]">Dos Mil Veintiséis</p>
                 </div>
 
-                <div class="space-y-1">
-                    <p class="font-serif text-xl">18:00 Horas</p>
-                    <p class="font-sans text-[9px] tracking-widest uppercase opacity-60">Recepción y Ceremonia</p>
-                </div>
+                <div class="flex flex-col md:flex-row gap-16 justify-center px-4 max-w-4xl mx-auto">
+                    <!-- Ceremonia -->
+                    <div class="space-y-4 flex-1">
+                        <div class="space-y-1 mb-6">
+                            <p class="font-sans text-[9px] tracking-widest uppercase text-[var(--dorado-suave)]">Ceremonia Religiosa</p>
+                            <p class="font-serif text-3xl text-[var(--texto-oscuro)]">18:00 hrs</p>
+                        </div>
+                        <p class="font-display text-3xl text-[var(--vino-acento)]">Parroquia de Nuestra Señora de Guadalupe</p>
+                        
+                        <a href="https://maps.app.goo.gl/W11aECtYSTvHtZjC8" target="_blank" rel="noopener noreferrer"
+                            class="inline-block text-[var(--texto-oscuro)] text-[10px] tracking-[0.2em] uppercase font-bold border-b border-[var(--dorado-suave)]/50 pb-1 mt-6 hover:opacity-60 transition-opacity">
+                            Abrir en Google Maps
+                        </a>
+                    </div>
 
-                <div class="space-y-4 pt-6">
-                    <p class="font-display text-2xl">Jardín & Terraza Nocturna</p>
-                    <p class="font-sans font-light text-xs leading-relaxed opacity-70">
-                        Av. de la Elegancia #1026, Guadalajara, Jalisco.
-                    </p>
-                    <a href="#"
-                        class="inline-block text-[var(--vino-acento)] text-[10px] tracking-[0.2em] uppercase font-bold border-b border-[var(--vino-acento)]/30 pb-1 mt-4 hover:opacity-60 transition-opacity">Ver Mapa</a>
+                    <!-- Divisor en Desktop -->
+                    <div class="hidden md:block w-px bg-[var(--dorado-suave)]/20"></div>
+                    <!-- Divisor en Mobile -->
+                    <div class="md:hidden h-px w-24 bg-[var(--dorado-suave)]/20 mx-auto"></div>
+
+                    <!-- Recepción -->
+                    <div class="space-y-4 flex-1">
+                        <div class="space-y-1 mb-6">
+                            <p class="font-sans text-[9px] tracking-widest uppercase text-[var(--dorado-suave)]">Recepción</p>
+                            <p class="font-serif text-3xl text-[var(--texto-oscuro)]">20:00 hrs</p>
+                        </div>
+                        <p class="font-display text-3xl text-[var(--vino-acento)]">Terraza "El Colibrí"</p>
+                        
+                        <a href="https://maps.app.goo.gl/YCE3AhQr6cpgmZgt8" target="_blank" rel="noopener noreferrer"
+                            class="inline-block text-[var(--texto-oscuro)] text-[10px] tracking-[0.2em] uppercase font-bold border-b border-[var(--dorado-suave)]/50 pb-1 mt-6 hover:opacity-60 transition-opacity">
+                            Abrir en Google Maps
+                        </a>
+                    </div>
                 </div>
             </section>
 
