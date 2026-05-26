@@ -12,8 +12,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-@RequestMapping("/invitacion")
 public class InvitationWebController {
+
+    @GetMapping("/")
+    public String redirectRoot() {
+        return "redirect:/invitacion";
+    }
 
     private final GuestService guestService;
     private final RsvpService rsvpService;
@@ -23,7 +27,7 @@ public class InvitationWebController {
         this.rsvpService = rsvpService;
     }
 
-    @GetMapping
+    @GetMapping("/invitacion")
     public String showLogin(@RequestParam(required = false) String error, Model model) {
         if (error != null) {
             model.addAttribute("error", "Código de invitación no válido o no encontrado.");
@@ -31,7 +35,7 @@ public class InvitationWebController {
         return "login";
     }
 
-    @PostMapping
+    @PostMapping("/invitacion")
     public String processLogin(@RequestParam String codigoInvitacion) {
         try {
             GuestResponse guest = guestService.getGuestByCodigo(codigoInvitacion);
@@ -41,7 +45,7 @@ public class InvitationWebController {
         }
     }
 
-    @GetMapping("/{token}")
+    @GetMapping("/invitacion/{token}")
     public String showInvitation(@PathVariable String token, 
                                  @RequestParam(required = false) String success,
                                  @RequestParam(required = false) String error,
@@ -57,7 +61,7 @@ public class InvitationWebController {
         }
     }
 
-    @PostMapping("/{token}/rsvp")
+    @PostMapping("/invitacion/{token}/rsvp")
     public String processRsvp(@PathVariable String token, 
                               @ModelAttribute RsvpRequest rsvpRequest, 
                               RedirectAttributes redirectAttributes) {
