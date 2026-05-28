@@ -12,8 +12,10 @@ public class AdminGuestDTO {
     private String notas;
     private String codigoInvitacion;
     private String celular;
+    private java.util.UUID id;
 
     public AdminGuestDTO(Guest guest, Integer pasesConfirmados) {
+        this.id = guest.getId();
         this.nombre = guest.getNombreInvitado();
         this.familia = guest.getFamilia();
         this.pasesAsignados = guest.getPasesAsignados();
@@ -32,4 +34,5 @@ public class AdminGuestDTO {
     public String getNotas() { return notas; }
     public String getCodigoInvitacion() { return codigoInvitacion; }
     public String getCelular() { return celular; }
+    public java.util.UUID getId() { return id; }
 }
