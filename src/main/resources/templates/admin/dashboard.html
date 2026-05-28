@@ -83,7 +83,12 @@
                                 <div class="text-sm font-medium text-slate-800" th:text="${guest.nombre}"></div>
                                 <div class="text-xs text-slate-400" th:text="${guest.familia}"></div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-slate-500" th:text="${guest.celular}"></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-slate-500 flex items-center gap-2">
+                                <span th:text="${guest.celular}"></span>
+                                <button th:onclick="'updatePhone(\'' + ${guest.id} + '\', \'' + ${guest.celular} + '\')'" class="text-slate-400 hover:text-[var(--vino-acento)] transition-colors" title="Editar celular">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                </button>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span th:if="${guest.estatus.name() == 'PENDIENTE'}" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pendiente</span>
                                 <span th:if="${guest.estatus.name() == 'CONFIRMADO'}" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Confirmado</span>
@@ -143,6 +148,24 @@
                 location.reload();
             })
             .catch(err => alert('Ocurrió un error al enviar. Revisa la consola o logs del servidor.'));
+        }
+
+        function updatePhone(id, currentPhone) {
+            const newPhone = prompt('Introduce el nuevo número de celular para reenviar la invitación:', currentPhone);
+            if (newPhone && newPhone.trim() !== currentPhone) {
+                fetch(`/api/v1/admin/guests/${id}/phone`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ celular: newPhone.trim() })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.error) throw new Error(data.error);
+                    alert(data.message);
+                    location.reload();
+                })
+                .catch(err => alert('Ocurrió un error: ' + err.message));
+            }
         }
     </script>
 </body>

@@ -78,4 +78,42 @@ public class GuestAdminController {
             "fallidos", fallidos
         ));
     }
+
+    @PutMapping("/{id}/phone")
+    public ResponseEntity<?> updateGuestPhone(@PathVariable java.util.UUID id, @RequestBody Map<String, String> payload) {
+        var guestOpt = guestRepository.findById(id);
+        if (guestOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invitado no encontrado"));
+        }
+        
+        Guest guest = guestOpt.get();
+        String celularRaw = payload.get("celular");
+        if (celularRaw == null || celularRaw.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Celular inválido o vacío"));
+        }
+        
+        // Normalizar celular
+        String celular = celularRaw.replaceAll("[^0-9+]", "");
+        if (celular.length() == 10 && !celular.startsWith("+")) {
+            celular = "+52" + celular;
+        } else if (celular.startsWith("52") && celular.length() == 12) {
+            celular = "+" + celular;
+        } else if (!celular.startsWith("+") && !celular.isEmpty()) {
+            celular = "+" + celular;
+        }
+        
+        // Verificar duplicados solo si es diferente al actual
+        if (!celular.equals(guest.getCelular()) && guestRepository.findByCelular(celular).isPresent()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El celular ya está registrado a otro invitado"));
+        }
+        
+        guest.setCelular(celular);
+        guest.setEstatus(com.tlamatinisoft.mosentiliztli.model.GuestStatus.PENDIENTE);
+        guestRepository.save(guest);
+        
+        return ResponseEntity.ok(Map.of(
+            "message", "Celular actualizado y estatus reiniciado a PENDIENTE",
+            "nuevo_celular", guest.getCelular()
+        ));
+    }
 }
