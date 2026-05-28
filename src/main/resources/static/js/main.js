@@ -22,21 +22,27 @@ function abrirInvitacion() {
 }
 
 function initCountdown() {
-    const target = new Date('October 31, 2026 18:00:00').getTime();
-    setInterval(() => {
+    const target = new Date('2026-10-31T18:00:00').getTime();
+    
+    updateTime(); // Ejecutar inmediatamente para evitar delay
+    setInterval(updateTime, 1000);
+
+    function updateTime() {
         const now = new Date().getTime();
         const diff = target - now;
         
         const elDays = document.getElementById('days');
         const elHours = document.getElementById('hours');
         const elMins = document.getElementById('mins');
+        const elSecs = document.getElementById('secs');
         
-        if(elDays && elHours && elMins) {
-            elDays.innerText = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
-            elHours.innerText = Math.max(0, Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
-            elMins.innerText = Math.max(0, Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)));
+        if(elDays && elHours && elMins && elSecs) {
+            elDays.innerText = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24))).toString().padStart(2, '0');
+            elHours.innerText = Math.max(0, Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).toString().padStart(2, '0');
+            elMins.innerText = Math.max(0, Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).toString().padStart(2, '0');
+            elSecs.innerText = Math.max(0, Math.floor((diff % (1000 * 60)) / 1000)).toString().padStart(2, '0');
         }
-    }, 1000);
+    }
 }
 
 function lanzarPetalos() {
