@@ -18,7 +18,7 @@ public class TwilioWebhookController {
         this.twilioWebhookService = twilioWebhookService;
     }
 
-    @PostMapping(value = "/twilio", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @PostMapping(value = "/twilio", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity<String> handleTwilioWebhook(
             @RequestParam("From") String from,
             @RequestParam("Body") String body) {
