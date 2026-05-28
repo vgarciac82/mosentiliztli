@@ -4,11 +4,11 @@ Plataforma de invitaciones digitales y gestión de confirmaciones (RSVP) diseña
 
 ## 🌟 Características Principales (Fase 1 MVP)
 
-1. **Gestión de Invitados masiva**: Carga rápida de invitados mediante archivos CSV con asignación de "Pases".
-2. **Distribución automatizada por WhatsApp**: Integración con Twilio Content Templates para enviar invitaciones personalizadas (con nombre del invitado y su URL única) directamente a su celular.
+1. **Gestión de Invitados masiva e interactiva**: Carga rápida de invitados mediante archivos CSV con asignación de "Pases". Edición de celulares en tiempo real desde el dashboard.
+2. **Comunicación Bidireccional por WhatsApp**: Integración con Twilio Content Templates para envío de invitaciones personalizadas. Webhooks entrantes para recibir las respuestas de los invitados en una Bandeja de Entrada centralizada.
 3. **Control de Acceso Seguro**: Autenticación doble mediante Tokens UUID (URL segura) o un código alfanumérico corto de 6 caracteres.
-4. **Dashboard Administrativo en Tiempo Real**: Panel de control donde los novios pueden ver el estatus de las invitaciones (Pendientes, Confirmados, Declinados) y el llenado del aforo en tiempo real.
-5. **Interfaz Mobile-First**: UI/UX interactiva construida con Thymeleaf y Tailwind CSS para que los invitados confirmen su asistencia desde su teléfono de manera intuitiva.
+4. **Dashboard Administrativo Seguro**: Panel de control protegido mediante Spring Security donde los novios pueden ver el estatus de las invitaciones, leer mensajes entrantes y monitorear el aforo en tiempo real.
+5. **Interfaz Mobile-First**: UI/UX interactiva y dinámica (Thymeleaf + Tailwind) para que los invitados confirmen su asistencia desde su teléfono con fluidez y diseño premium.
 
 ---
 
