@@ -25,7 +25,14 @@ public class TwilioWebhookController {
         
         twilioWebhookService.handleIncomingMessage(from, body);
         
-        // Retornamos un TwiML vacío para que Twilio no responda automáticamente al usuario
-        return ResponseEntity.ok("<Response></Response>");
+        String responseMessage = "<Response><Message>"
+                + "¡Hola! 💍 Gracias por escribirnos.\n\n"
+                + "Este es un número automático configurado para tus invitaciones y confirmación de asistencia.\n\n"
+                + "Si quieres mandarnos un mensaje personal o tienes alguna duda, escríbenos directamente a nuestros números personales tocando aquí:\n\n"
+                + "🤵🏻‍♂️ Vicente: https://wa.me/523330698723\n"
+                + "👰🏻‍♀️ Jenny: https://wa.me/523313203746"
+                + "</Message></Response>";
+
+        return ResponseEntity.ok(responseMessage);
     }
 }
