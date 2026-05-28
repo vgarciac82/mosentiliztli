@@ -64,9 +64,13 @@ public class GuestAdminController {
         for (Guest guest : pendientes) {
             try {
                 twilioNotificationService.sendInvitation(guest);
+                guest.setEstatus(com.tlamatinisoft.mosentiliztli.model.GuestStatus.INVITACION_ENVIADA);
+                guestRepository.save(guest);
                 enviados++;
             } catch (Exception e) {
                 fallidos++;
+                guest.setEstatus(com.tlamatinisoft.mosentiliztli.model.GuestStatus.ERROR_ENVIO);
+                guestRepository.save(guest);
                 System.err.println("Error al enviar WhatsApp a " + guest.getNombreInvitado() + ": " + e.getMessage());
                 e.printStackTrace();
             }
