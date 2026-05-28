@@ -12,7 +12,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -35,6 +37,7 @@ public class GuestImportService {
              
             String[] line;
             boolean isFirstLine = true;
+            Set<String> processedPhones = new HashSet<>();
             
             while ((line = csvReader.readNext()) != null) {
                 if (isFirstLine) {
@@ -48,7 +51,7 @@ public class GuestImportService {
                 
                 String familia = line[0] != null ? line[0].trim() : "";
                 String pasesStr = line[1] != null ? line[1].trim() : "";
-                String celular = line[2] != null ? line[2].trim() : "";
+                String celularRaw = line[2] != null ? line[2].trim() : "";
                 String nombreInvitado = line[3] != null ? line[3].trim() : "";
                 String grupo = line[4] != null ? line[4].trim() : "";
                 String notas = line[5] != null ? line[5].trim() : "";
@@ -61,6 +64,22 @@ public class GuestImportService {
                 } catch (NumberFormatException e) {
                     // Predeterminado a 1 si falla
                 }
+                
+                // Normalizar celular
+                String celular = celularRaw.replaceAll("[^0-9+]", "");
+                if (celular.length() == 10 && !celular.startsWith("+")) {
+                    celular = "+52" + celular;
+                } else if (celular.startsWith("52") && celular.length() == 12) {
+                    celular = "+" + celular;
+                } else if (!celular.startsWith("+") && !celular.isEmpty()) {
+                    celular = "+" + celular;
+                }
+                
+                // Idempotencia: Saltar si ya existe en la BD o en este mismo archivo
+                if (celular.isEmpty() || processedPhones.contains(celular) || guestRepository.findByCelular(celular).isPresent()) {
+                    continue;
+                }
+                processedPhones.add(celular);
                 
                 Guest guest = new Guest();
                 guest.setFamilia(familia);
