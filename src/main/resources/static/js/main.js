@@ -22,7 +22,8 @@ function abrirInvitacion() {
 }
 
 function initCountdown() {
-    const target = new Date('2026-10-31T18:00:00').getTime();
+    // Meses en JS son 0-indexados (9 = Octubre) - Este formato evita bugs en Safari iOS
+    const target = new Date(2026, 9, 31, 18, 0, 0).getTime();
     
     updateTime(); // Ejecutar inmediatamente para evitar delay
     setInterval(updateTime, 1000);
