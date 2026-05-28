@@ -6,6 +6,8 @@ import com.tlamatinisoft.mosentiliztli.model.GuestStatus;
 import com.tlamatinisoft.mosentiliztli.model.RsvpResponse;
 import com.tlamatinisoft.mosentiliztli.repository.GuestRepository;
 import com.tlamatinisoft.mosentiliztli.repository.RsvpResponseRepository;
+import com.tlamatinisoft.mosentiliztli.repository.TwilioMessageRepository;
+import com.tlamatinisoft.mosentiliztli.dto.InboxMessageDTO;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,10 +24,12 @@ public class AdminWebController {
 
     private final GuestRepository guestRepository;
     private final RsvpResponseRepository rsvpResponseRepository;
+    private final TwilioMessageRepository twilioMessageRepository;
 
-    public AdminWebController(GuestRepository guestRepository, RsvpResponseRepository rsvpResponseRepository) {
+    public AdminWebController(GuestRepository guestRepository, RsvpResponseRepository rsvpResponseRepository, TwilioMessageRepository twilioMessageRepository) {
         this.guestRepository = guestRepository;
         this.rsvpResponseRepository = rsvpResponseRepository;
+        this.twilioMessageRepository = twilioMessageRepository;
     }
 
     @GetMapping
@@ -48,7 +52,12 @@ public class AdminWebController {
         long totalFamiliasDeclinadas = guests.stream().filter(g -> g.getEstatus() == GuestStatus.DECLINADO).count();
         long totalFamiliasPendientes = guests.stream().filter(g -> g.getEstatus() == GuestStatus.PENDIENTE).count();
 
+        List<InboxMessageDTO> inboxMessages = twilioMessageRepository.findAllByOrderByFechaRecepcionDesc().stream()
+            .map(InboxMessageDTO::new)
+            .collect(Collectors.toList());
+
         model.addAttribute("invitados", dtoList);
+        model.addAttribute("mensajes", inboxMessages);
         model.addAttribute("totalInvitados", totalInvitados);
         model.addAttribute("totalPasesAsignados", totalPasesAsignados);
         model.addAttribute("totalPasesConfirmados", totalPasesConfirmados);
