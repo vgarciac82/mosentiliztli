@@ -176,7 +176,6 @@
                         <div class="w-5/12"></div>
                     </div>
                 </div>
-                </div>
             </section>
 
             <!-- CALL TO ACTION (Subtle) -->
@@ -350,23 +349,25 @@
         </main>
     </div>
 
-    <script>
-        function togglePases(valor) {
-            const container = document.getElementById('pasesContainer');
-            if (valor === 'CONFIRMADO') {
-                container.classList.remove('hidden');
-            } else {
-                container.classList.add('hidden');
+    <th:block layout:fragment="page-scripts">
+        <script>
+            function togglePases(valor) {
+                const container = document.getElementById('pasesContainer');
+                if (valor === 'CONFIRMADO') {
+                    container.classList.remove('hidden');
+                } else {
+                    container.classList.add('hidden');
+                }
             }
-        }
-        
-        // Ejecutar al cargar por si hay valor preseleccionado
-        document.addEventListener("DOMContentLoaded", function() {
-            const select = document.getElementById('statusSelect');
-            if(select && select.value) {
-                togglePases(select.value);
-            }
-        });
-    </script>
+            
+            // Ejecutar al cargar por si hay valor preseleccionado
+            document.addEventListener("DOMContentLoaded", function() {
+                const select = document.getElementById('statusSelect');
+                if(select && select.value) {
+                    togglePases(select.value);
+                }
+            });
+        </script>
+    </th:block>
 </body>
 </html>
