@@ -24,6 +24,11 @@ public class TwilioWebhookService {
     public void handleIncomingMessage(String remitente, String cuerpoMensaje) {
         // Formato esperado de Twilio: whatsapp:+123456789
         String celular = remitente.replace("whatsapp:", "").trim();
+        
+        // Normalizar caso especial de México (+521 vs +52)
+        if (celular.startsWith("+521") && celular.length() == 13) {
+            celular = "+52" + celular.substring(4);
+        }
 
         Guest guest = guestRepository.findByCelular(celular).orElse(null);
 

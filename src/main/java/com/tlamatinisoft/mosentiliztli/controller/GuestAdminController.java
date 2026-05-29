@@ -120,4 +120,42 @@ public class GuestAdminController {
             "nuevo_celular", guest.getCelular()
         ));
     }
+
+    @PostMapping
+    public ResponseEntity<?> createGuest(@RequestBody Map<String, Object> payload) {
+        try {
+            String nombre = (String) payload.get("nombreInvitado");
+            String celular = (String) payload.get("celular");
+            int pases = Integer.parseInt(payload.getOrDefault("pasesAsignados", "1").toString());
+            String familia = (String) payload.get("familia");
+            String grupo = (String) payload.get("grupo");
+
+            Guest newGuest = guestImportService.createSingleGuest(nombre, celular, pases, familia, grupo);
+
+            return ResponseEntity.ok(Map.of(
+                "message", "Invitado registrado exitosamente",
+                "guest_id", newGuest.getId()
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Error interno al crear invitado"));
+        }
+    }
+
+    @PutMapping("/{id}/reset-status")
+    public ResponseEntity<?> resetGuestStatus(@PathVariable java.util.UUID id) {
+        var guestOpt = guestRepository.findById(id);
+        if (guestOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invitado no encontrado"));
+        }
+        
+        Guest guest = guestOpt.get();
+        guest.setEstatus(com.tlamatinisoft.mosentiliztli.model.GuestStatus.PENDIENTE);
+        guestRepository.save(guest);
+        
+        return ResponseEntity.ok(Map.of(
+            "message", "Estatus reiniciado a PENDIENTE exitosamente"
+        ));
+    }
 }

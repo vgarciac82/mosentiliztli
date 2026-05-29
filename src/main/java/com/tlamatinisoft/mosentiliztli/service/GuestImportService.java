@@ -114,4 +114,34 @@ public class GuestImportService {
         
         return code;
     }
+
+    @Transactional
+    public Guest createSingleGuest(String nombreInvitado, String celularRaw, int pasesAsignados, String familia, String grupo) {
+        // Normalizar celular
+        String celular = celularRaw != null ? celularRaw.replaceAll("[^0-9+]", "") : "";
+        if (celular.length() == 10 && !celular.startsWith("+")) {
+            celular = "+52" + celular;
+        } else if (celular.startsWith("52") && celular.length() == 12) {
+            celular = "+" + celular;
+        } else if (!celular.startsWith("+") && !celular.isEmpty()) {
+            celular = "+" + celular;
+        }
+
+        if (celular.isEmpty() || guestRepository.findByCelular(celular).isPresent()) {
+            throw new IllegalArgumentException("Celular inválido o ya registrado.");
+        }
+
+        Guest guest = new Guest();
+        guest.setNombreInvitado(nombreInvitado != null ? nombreInvitado.trim() : "");
+        guest.setCelular(celular);
+        guest.setPasesAsignados(pasesAsignados);
+        guest.setFamilia(familia != null ? familia.trim() : "");
+        guest.setGrupo(grupo != null ? grupo.trim() : "");
+        guest.setEstatus(GuestStatus.PENDIENTE);
+        
+        guest.setToken(UUID.randomUUID().toString());
+        guest.setCodigoInvitacion(generateUniqueCode());
+
+        return guestRepository.save(guest);
+    }
 }
