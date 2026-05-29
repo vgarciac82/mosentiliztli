@@ -13,8 +13,10 @@ public class AdminGuestDTO {
     private String codigoInvitacion;
     private String celular;
     private java.util.UUID id;
+    private long visitas;
+    private java.time.LocalDateTime ultimaVisita;
 
-    public AdminGuestDTO(Guest guest, Integer pasesConfirmados) {
+    public AdminGuestDTO(Guest guest, Integer pasesConfirmados, long visitas, java.time.LocalDateTime ultimaVisita) {
         this.id = guest.getId();
         this.nombre = guest.getNombreInvitado();
         this.familia = guest.getFamilia();
@@ -24,6 +26,8 @@ public class AdminGuestDTO {
         this.notas = guest.getNotas();
         this.codigoInvitacion = guest.getCodigoInvitacion();
         this.celular = guest.getCelular();
+        this.visitas = visitas;
+        this.ultimaVisita = ultimaVisita;
     }
 
     public String getNombre() { return nombre; }
@@ -35,4 +39,6 @@ public class AdminGuestDTO {
     public String getCodigoInvitacion() { return codigoInvitacion; }
     public String getCelular() { return celular; }
     public java.util.UUID getId() { return id; }
+    public long getVisitas() { return visitas; }
+    public java.time.LocalDateTime getUltimaVisita() { return ultimaVisita; }
 }

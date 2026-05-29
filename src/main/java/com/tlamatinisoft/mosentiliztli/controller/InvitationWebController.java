@@ -21,10 +21,12 @@ public class InvitationWebController {
 
     private final GuestService guestService;
     private final RsvpService rsvpService;
+    private final com.tlamatinisoft.mosentiliztli.service.GuestVisitService guestVisitService;
 
-    public InvitationWebController(GuestService guestService, RsvpService rsvpService) {
+    public InvitationWebController(GuestService guestService, RsvpService rsvpService, com.tlamatinisoft.mosentiliztli.service.GuestVisitService guestVisitService) {
         this.guestService = guestService;
         this.rsvpService = rsvpService;
+        this.guestVisitService = guestVisitService;
     }
 
     @GetMapping("/invitacion")
@@ -49,9 +51,16 @@ public class InvitationWebController {
     public String showInvitation(@PathVariable String token, 
                                  @RequestParam(required = false) String success,
                                  @RequestParam(required = false) String error,
+                                 jakarta.servlet.http.HttpServletRequest request,
                                  Model model) {
         try {
             GuestResponse guest = guestService.getGuestByToken(token);
+            
+            // Log the visit asynchronously or simply inline
+            String userAgent = request.getHeader("User-Agent");
+            String ipAddress = request.getRemoteAddr();
+            guestVisitService.logVisit(token, userAgent, ipAddress);
+
             model.addAttribute("guest", guest);
             if (success != null) model.addAttribute("success", true);
             if (error != null) model.addAttribute("error", error);

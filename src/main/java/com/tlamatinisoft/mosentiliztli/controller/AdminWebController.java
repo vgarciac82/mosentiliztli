@@ -25,11 +25,13 @@ public class AdminWebController {
     private final GuestRepository guestRepository;
     private final RsvpResponseRepository rsvpResponseRepository;
     private final TwilioMessageRepository twilioMessageRepository;
+    private final com.tlamatinisoft.mosentiliztli.repository.GuestVisitRepository guestVisitRepository;
 
-    public AdminWebController(GuestRepository guestRepository, RsvpResponseRepository rsvpResponseRepository, TwilioMessageRepository twilioMessageRepository) {
+    public AdminWebController(GuestRepository guestRepository, RsvpResponseRepository rsvpResponseRepository, TwilioMessageRepository twilioMessageRepository, com.tlamatinisoft.mosentiliztli.repository.GuestVisitRepository guestVisitRepository) {
         this.guestRepository = guestRepository;
         this.rsvpResponseRepository = rsvpResponseRepository;
         this.twilioMessageRepository = twilioMessageRepository;
+        this.guestVisitRepository = guestVisitRepository;
     }
 
     @GetMapping
@@ -40,8 +42,23 @@ public class AdminWebController {
         Map<UUID, Integer> rsvpMap = rsvps.stream()
             .collect(Collectors.toMap(r -> r.getGuest().getId(), RsvpResponse::getPasesConfirmados, (v1, v2) -> v1)); // merge function in case of duplicates
             
+        List<com.tlamatinisoft.mosentiliztli.model.GuestVisit> visits = guestVisitRepository.findAll();
+        Map<UUID, Long> visitCountMap = visits.stream()
+            .collect(Collectors.groupingBy(v -> v.getGuest().getId(), Collectors.counting()));
+        Map<UUID, java.time.LocalDateTime> lastVisitMap = visits.stream()
+            .collect(Collectors.toMap(
+                v -> v.getGuest().getId(), 
+                com.tlamatinisoft.mosentiliztli.model.GuestVisit::getVisitedAt, 
+                (v1, v2) -> v1.isAfter(v2) ? v1 : v2
+            ));
+
         List<AdminGuestDTO> dtoList = guests.stream()
-            .map(g -> new AdminGuestDTO(g, rsvpMap.get(g.getId())))
+            .map(g -> new AdminGuestDTO(
+                g, 
+                rsvpMap.get(g.getId()), 
+                visitCountMap.getOrDefault(g.getId(), 0L), 
+                lastVisitMap.get(g.getId())
+            ))
             .collect(Collectors.toList());
             
         long totalInvitados = guests.size();

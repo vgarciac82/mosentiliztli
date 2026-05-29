@@ -97,6 +97,7 @@
                             <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Celular</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Estatus</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Pases</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Visitas</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Notas</th>
                         </tr>
                     </thead>
@@ -127,6 +128,13 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                 <span class="font-semibold text-slate-800" th:text="${guest.pasesConfirmados}">0</span> 
                                 / <span th:text="${guest.pasesAsignados}">0</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                <span class="inline-flex items-center gap-1">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    <span class="font-semibold text-slate-700" th:text="${guest.visitas}">0</span>
+                                </span>
+                                <div th:if="${guest.ultimaVisita != null}" class="text-[10px] text-slate-400 mt-1" th:text="${#temporals.format(guest.ultimaVisita, 'dd MMM HH:mm')}"></div>
                             </td>
                             <td class="px-6 py-4 text-sm text-slate-500 max-w-xs truncate" th:text="${guest.notas}"></td>
                         </tr>
