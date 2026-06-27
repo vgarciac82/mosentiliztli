@@ -40,6 +40,17 @@
             </div>
         </div>
 
+        <!-- CONTENEDOR DE VIDEO DE INTRODUCCIÓN -->
+        <div id="video-intro-container" class="fixed inset-0 z-50 bg-black flex items-center justify-center hidden opacity-0 transition-opacity duration-700">
+            <video id="video-intro" class="w-full h-full object-cover md:object-contain" playsinline>
+                <source th:src="@{/video/inicio.mp4}" type="video/mp4">
+                Tu navegador no soporta videos HTML5.
+            </video>
+            <button onclick="saltarVideo()" class="absolute top-6 right-6 z-50 bg-black/50 hover:bg-black/80 text-white border border-white/20 px-4 py-2 rounded-full text-xs font-sans tracking-widest uppercase backdrop-blur-sm transition-all cursor-pointer">
+                Saltar ⏭️
+            </button>
+        </div>
+
         <main id="contenido" class="hidden opacity-0 transition-opacity duration-1000 max-w-2xl mx-auto px-6">
             <div id="particles-container" class="fixed inset-0 pointer-events-none z-30"></div>
 

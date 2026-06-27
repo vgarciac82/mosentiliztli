@@ -1,13 +1,56 @@
 function abrirInvitacion() {
     const portada = document.getElementById('portada');
-    const contenido = document.getElementById('contenido');
-    const navbar = document.getElementById('navbar');
+    const videoContainer = document.getElementById('video-intro-container');
+    const video = document.getElementById('video-intro');
 
     if (portada) {
         portada.style.transform = 'translateY(-100%)';
         portada.style.opacity = '0';
+        setTimeout(() => {
+            portada.classList.add('hidden');
+        }, 1000);
     }
 
+    if (videoContainer && video) {
+        videoContainer.classList.remove('hidden');
+        setTimeout(() => {
+            videoContainer.classList.add('opacity-100');
+            video.play().catch(err => {
+                console.log("Autoplay bloqueado o error al reproducir video:", err);
+                saltarVideo(); // Si por alguna razón falla el video, saltar directo
+            });
+        }, 300);
+
+        video.onended = () => {
+            saltarVideo();
+        };
+    } else {
+        mostrarContenidoPrincipal();
+    }
+}
+
+function saltarVideo() {
+    const videoContainer = document.getElementById('video-intro-container');
+    const video = document.getElementById('video-intro');
+    
+    if (video) {
+        video.pause();
+    }
+    
+    if (videoContainer) {
+        videoContainer.classList.remove('opacity-100');
+        setTimeout(() => {
+            videoContainer.classList.add('hidden');
+        }, 700);
+    }
+    
+    mostrarContenidoPrincipal();
+}
+
+function mostrarContenidoPrincipal() {
+    const contenido = document.getElementById('contenido');
+    const navbar = document.getElementById('navbar');
+    
     if (contenido && navbar) {
         contenido.classList.remove('hidden');
         navbar.classList.remove('hidden');
@@ -20,6 +63,7 @@ function abrirInvitacion() {
         }, 300);
     }
 }
+
 
 function initCountdown() {
     // Meses en JS son 0-indexados (9 = Octubre) - Este formato evita bugs en Safari iOS
