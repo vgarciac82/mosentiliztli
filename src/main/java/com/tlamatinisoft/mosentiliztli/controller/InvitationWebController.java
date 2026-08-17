@@ -6,6 +6,7 @@ import com.tlamatinisoft.mosentiliztli.exception.ResourceNotFoundException;
 import com.tlamatinisoft.mosentiliztli.exception.RsvpValidationException;
 import com.tlamatinisoft.mosentiliztli.service.GuestService;
 import com.tlamatinisoft.mosentiliztli.service.RsvpService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,12 @@ public class InvitationWebController {
     @GetMapping("/")
     public String redirectRoot() {
         return "redirect:/invitacion";
+    }
+
+    @RequestMapping(value = "/login", method = RequestMethod.HEAD)
+    @ResponseBody
+    public ResponseEntity<Void> headLogin() {
+        return ResponseEntity.ok().build();
     }
 
     private final GuestService guestService;
